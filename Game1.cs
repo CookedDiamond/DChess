@@ -14,18 +14,16 @@ namespace DChess {
 
 		// Board variables
 		private int _squareSize = 32;
+		private readonly Color _lightSquaresColor = new Color(242 / 255f, 225 / 255f, 195 / 255f);
+		private readonly Color _darkSquaresColor = new Color(195 / 255f, 160 / 255f, 130 / 255f);
 
 		private float _scale = 1.5f;
-		private readonly float _minScale = 1f;
+		private readonly float _minScale = .5f;
 		private readonly float _maxScale = 4f;
 		private float _centerOffsetX = 0;
 		private float _centerOffsetY = 0;
 
-		
-
-
-
-		private Board _board;
+		private readonly Board _board;
 
 		public Game1(Board board) {
 			_board = board;
@@ -52,7 +50,7 @@ namespace DChess {
 
 			TextureLoader.LoadStandardTextures(Content);
 			_squareSize = TextureLoader.SquareTexture.Bounds.Width;
-			_pieceFactor = (float)(_squareSize) / (float)(TextureLoader.PawnTexture.Bounds.Width);
+			_pieceFactor = (float)(_squareSize) / (float)(TextureLoader.PawnTexture[0].Bounds.Width);
 		}
 
 		protected override void Update(GameTime gameTime) {
@@ -85,7 +83,7 @@ namespace DChess {
 				float y = (_board._size.y - 1) * factor - square.position.y * factor;
 
 				// Squares
-				Color color = (square.team == TeamType.White) ? Color.White : Color.Black;
+				Color color = (square.team == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
 				drawSprite(spriteBatch, TextureLoader.SquareTexture, new Vector2(x, y), color, 0);
 
 				// Pieces

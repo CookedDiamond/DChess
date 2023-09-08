@@ -19,12 +19,12 @@ namespace DChess.Chess {
 
 		public Texture2D GetPieceTexture() {
 			return type switch {
-				PieceType.Pawn => TextureLoader.PawnTexture,
-				PieceType.Bishop => TextureLoader.BishopTexture,
-				PieceType.Knight => TextureLoader.KnightTexture,
-				PieceType.Rook => TextureLoader.RookTexture,
-				PieceType.Queen => TextureLoader.QueenTexture,
-				PieceType.King => TextureLoader.KingTexture,
+				PieceType.Pawn => TextureLoader.PawnTexture[(int)team],
+				PieceType.Bishop => TextureLoader.BishopTexture[(int)team],
+				PieceType.Knight => TextureLoader.KnightTexture[(int)team],
+				PieceType.Rook => TextureLoader.RookTexture[(int)team],
+				PieceType.Queen => TextureLoader.QueenTexture[(int)team],
+				PieceType.King => TextureLoader.KingTexture[(int)team],
 				_ => throw new NotImplementedException()
 			};
 		}
@@ -41,7 +41,7 @@ namespace DChess.Chess {
 			};
 		}
 
-		private String teamAsChar() {
+		private String teamAsString() {
 			return team switch {
 				TeamType.Black => "black",
 				TeamType.White => "white",
@@ -50,7 +50,7 @@ namespace DChess.Chess {
 		}
 
 		public override string ToString() {
-			return $"type: {typeAsChar()} team: {teamAsChar()}";
+			return $"type: {typeAsChar()} team: {teamAsString()}";
 		}
 	}
 
