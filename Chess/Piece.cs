@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DChess.Util;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +15,18 @@ namespace DChess.Chess {
 		public Piece(PieceType type, TeamType team) {
 			this.type = type;
 			this.team = team;
+		}
+
+		public Texture2D GetPieceTexture() {
+			return type switch {
+				PieceType.Pawn => TextureLoader.PawnTexture,
+				PieceType.Bishop => TextureLoader.BishopTexture,
+				PieceType.Knight => TextureLoader.KnightTexture,
+				PieceType.Rook => TextureLoader.RookTexture,
+				PieceType.Queen => TextureLoader.QueenTexture,
+				PieceType.King => TextureLoader.KingTexture,
+				_ => throw new NotImplementedException()
+			};
 		}
 
 		private char typeAsChar() {
@@ -47,6 +61,5 @@ namespace DChess.Chess {
 		Rook,
 		Queen,
 		King
-
 	}
 }

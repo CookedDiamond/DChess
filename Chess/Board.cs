@@ -15,6 +15,7 @@ namespace DChess.Chess {
 		public Board(Vector2Int size) {
 			_squares = new Square[size.x, size.y];
 			_size = size;
+			Initialize();
 		}
 
 		public void Initialize() {
