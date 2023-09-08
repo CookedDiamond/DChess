@@ -1,4 +1,5 @@
 ﻿using DChess.Chess;
+using DChess.UI;
 using DChess.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -7,28 +8,25 @@ using Microsoft.Xna.Framework.Input;
 namespace DChess {
 	public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
+		private readonly ButtonManager _buttonManager;
+		private readonly GameScaling _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
 		// Piece variables
-		private float _pieceFactor = 0.5f;
 
 		// Board variables
-		private int _squareSize = 32;
 		private readonly Color _lightSquaresColor = new Color(242 / 255f, 225 / 255f, 195 / 255f);
 		private readonly Color _darkSquaresColor = new Color(195 / 255f, 160 / 255f, 130 / 255f);
 
-		private float _scale = 1.5f;
-		private readonly float _minScale = .5f;
-		private readonly float _maxScale = 4f;
-		private float _centerOffsetX = 0;
-		private float _centerOffsetY = 0;
-
 		private readonly Board _board;
 
-		public Game1(Board board) {
+		public Game1(Board board, ButtonManager buttonManager) {
 			_board = board;
+			_buttonManager = buttonManager;
 
 			_graphics = new GraphicsDeviceManager(this);
+			_gameScaling = new GameScaling(_board, _graphics);
+
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
 			
@@ -49,22 +47,26 @@ namespace DChess {
 			SpriteBatch = new SpriteBatch(GraphicsDevice);
 
 			TextureLoader.LoadStandardTextures(Content);
-			_squareSize = TextureLoader.SquareTexture.Bounds.Width;
-			_pieceFactor = (float)(_squareSize) / (float)(TextureLoader.PawnTexture[0].Bounds.Width);
+
+			_gameScaling.Initialize();
 		}
 
 		protected override void Update(GameTime gameTime) {
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
 				Exit();
 
+			_gameScaling.Update();
+
+			var mouseState = Mouse.GetState();
+			if (mouseState.LeftButton == ButtonState.Pressed) {
+				_buttonManager.OnClick(new Vector2Int(mouseState.X, mouseState.Y));
+			}
+
 			base.Update(gameTime);
 		}
 
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.Clear(Color.DarkSeaGreen);
-
-			calculateBoardCenterOffsets();
-			calculateScale();
 
 			SpriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.LinearClamp, null);
 			// Draw Board
@@ -78,7 +80,7 @@ namespace DChess {
 		private void drawBoard(SpriteBatch spriteBatch) {
 			foreach (var square in _board.GetSquares()) {
 				
-				float factor = _squareSize * _scale;
+				float factor = _gameScaling.GetFactor();
 				float x = square.position.x * factor;
 				float y = (_board._size.y - 1) * factor - square.position.y * factor;
 
@@ -89,7 +91,7 @@ namespace DChess {
 				// Pieces
 				var piece = square.piece;
 				if (piece != null) {
-					drawSprite(spriteBatch, square.piece.GetPieceTexture(), new Vector2(x, y), Color.White, 0, _pieceFactor);
+					drawSprite(spriteBatch, square.piece.GetPieceTexture(), new Vector2(x, y), Color.White, 0, _gameScaling._pieceFactor);
 				}
 				
 			}
@@ -97,34 +99,15 @@ namespace DChess {
 
 		private void drawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color color, float layerDepth, float scaleFactor = 1) {
 			spriteBatch.Draw(texture: texture, 
-				position: new Vector2(position.X + _centerOffsetX, position.Y + _centerOffsetY), 
+				position: new Vector2(position.X + _gameScaling.CenterOffsetX, position.Y + _gameScaling.CenterOffsetY), 
 				sourceRectangle: null, 
 				color: color, 
 				rotation: 0, 
 				origin: Vector2.Zero, 
-				scale: _scale * scaleFactor, 
+				scale: _gameScaling.Scale * scaleFactor, 
 				effects: SpriteEffects.None, 
 				layerDepth: layerDepth);
 		}
 
-		private void calculateBoardCenterOffsets() {
-			float boardWidth = _board._size.x * _squareSize * _scale;
-			float boardheight = _board._size.y * _squareSize * _scale;
-
-			float windowWidth = _graphics.PreferredBackBufferWidth;
-			float windowheight = _graphics.PreferredBackBufferHeight;
-
-			_centerOffsetX = (windowWidth - boardWidth) / 2;
-			_centerOffsetY = (windowheight - boardheight) / 2;
-		}
-
-		private void calculateScale() {
-			float boardWidthNoScale = _board._size.x * _squareSize;
-
-			float windowheight = _graphics.PreferredBackBufferHeight;
-
-			float scale = (windowheight * 0.9f) / boardWidthNoScale;
-			_scale = MathHelper.Clamp(scale, _minScale, _maxScale);
-		}
 	}
 }
