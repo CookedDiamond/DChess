@@ -3,8 +3,13 @@ using Microsoft.Xna.Framework;
 using System.Diagnostics;
 
 namespace DChess.UI {
+
 	public class Button {
-		private Rectangle _rectangle;
+		public delegate void OnButtonClicked();
+
+		public event OnButtonClicked OnClickEvent;
+
+		private Rectangle _rectangle;		
 
 		public Button(Rectangle rectangle) {
 			_rectangle = rectangle;
@@ -16,8 +21,9 @@ namespace DChess.UI {
 
 		public void TriggerButton(Vector2Int mousePosition) {
 			if (GetButtonRectangle().Intersects(new Rectangle(mousePosition.x, mousePosition.y, 1, 1))) {
-
-				Debug.WriteLine("Button pressed! " + _rectangle.X + " " + _rectangle.Y);
+				if (OnClickEvent != null) {
+					OnClickEvent();
+				}
 			}
 		}
 

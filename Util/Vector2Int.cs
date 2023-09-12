@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -13,6 +14,11 @@ namespace DChess.Util {
 		public Vector2Int(int x, int y) {
 			this.x = x; 
 			this.y = y;
+		}
+
+		public Vector2Int(Vector2 position) {
+			x = (int)Math.Round(position.X);
+			y = (int)Math.Round(position.Y);
 		}
 
 		public static Vector2Int operator +(Vector2Int a)
@@ -37,6 +43,14 @@ namespace DChess.Util {
 
 		public override string ToString() {
 			return $"x: {x} y: {y}";
+		}
+
+		public override bool Equals(object obj) {
+			throw new NotImplementedException();
+		}
+
+		public override int GetHashCode() {
+			throw new NotImplementedException();
 		}
 	}
 }

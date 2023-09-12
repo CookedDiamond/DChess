@@ -12,13 +12,16 @@ namespace DChess {
 		private readonly GameScaling _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
-		// Piece variables
+		// Mouse variables TODO: make Inputhandler Class
+		private bool _lastMouseStateWasPressed = false;
 
 		// Board variables
 		private readonly Color _lightSquaresColor = new Color(242 / 255f, 225 / 255f, 195 / 255f);
 		private readonly Color _darkSquaresColor = new Color(195 / 255f, 160 / 255f, 130 / 255f);
 
 		private readonly Board _board;
+
+		private SpriteFont _font;
 
 		public Game1(Board board, ButtonManager buttonManager) {
 			_board = board;
@@ -47,6 +50,7 @@ namespace DChess {
 			SpriteBatch = new SpriteBatch(GraphicsDevice);
 
 			TextureLoader.LoadStandardTextures(Content);
+			_font = Content.Load<SpriteFont>("Font");
 
 			_gameScaling.Initialize();
 		}
@@ -58,8 +62,15 @@ namespace DChess {
 			_gameScaling.Update();
 
 			var mouseState = Mouse.GetState();
-			if (mouseState.LeftButton == ButtonState.Pressed) {
+			if (_lastMouseStateWasPressed && mouseState.LeftButton == ButtonState.Released) {
 				_buttonManager.OnClick(new Vector2Int(mouseState.X, mouseState.Y));
+			}
+
+			if(mouseState.LeftButton == ButtonState.Pressed) {
+				_lastMouseStateWasPressed = true;
+			}
+			else {
+				_lastMouseStateWasPressed = false;
 			}
 
 			base.Update(gameTime);
@@ -80,18 +91,16 @@ namespace DChess {
 		private void drawBoard(SpriteBatch spriteBatch) {
 			foreach (var square in _board.GetSquares()) {
 				
-				float factor = _gameScaling.GetFactor();
-				float x = square.position.x * factor;
-				float y = (_board._size.y - 1) * factor - square.position.y * factor;
+				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.position);
 
 				// Squares
 				Color color = (square.team == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
-				drawSprite(spriteBatch, TextureLoader.SquareTexture, new Vector2(x, y), color, 0);
+				drawSprite(spriteBatch, TextureLoader.SquareTexture, windowPosition, color, 0);
 
 				// Pieces
 				var piece = square.piece;
 				if (piece != null) {
-					drawSprite(spriteBatch, square.piece.GetPieceTexture(), new Vector2(x, y), Color.White, 0, _gameScaling._pieceFactor);
+					drawSprite(spriteBatch, square.piece.GetPieceTexture(), windowPosition, Color.White, 0, _gameScaling._pieceFactor);
 				}
 				
 			}
@@ -99,7 +108,7 @@ namespace DChess {
 
 		private void drawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color color, float layerDepth, float scaleFactor = 1) {
 			spriteBatch.Draw(texture: texture, 
-				position: new Vector2(position.X + _gameScaling.CenterOffsetX, position.Y + _gameScaling.CenterOffsetY), 
+				position: new Vector2(position.X, position.Y), 
 				sourceRectangle: null, 
 				color: color, 
 				rotation: 0, 

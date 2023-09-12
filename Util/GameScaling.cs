@@ -10,12 +10,16 @@ using System.Threading.Tasks;
 
 namespace DChess.Util {
 	public class GameScaling {
+		public static GameScaling Instance { get; private set; }
+
 		private readonly Board _board;
 		private readonly GraphicsDeviceManager _graphics;
 
-		private int _squareSize;
+		public int _squareSize { get; private set; }
 		private int _pieceSize;
+
 		public float _pieceFactor { get; private set; }
+		private float _factor = 1;
 
 		public float Scale { get; private set; }
 		private readonly float _minScale = .5f;
@@ -24,9 +28,10 @@ namespace DChess.Util {
 		public float CenterOffsetX { get; private set; }
 		public float CenterOffsetY { get; private set; }
 
-public GameScaling(Board board, GraphicsDeviceManager graphics) {
+		public GameScaling(Board board, GraphicsDeviceManager graphics) {
 			_board = board;
 			_graphics = graphics;
+			Instance ??= this;
 		}
 
 		public void Initialize() {
@@ -35,12 +40,18 @@ public GameScaling(Board board, GraphicsDeviceManager graphics) {
 			_pieceFactor = (float)(_squareSize) / (float)(_pieceSize);
 		}
 
+		public Vector2 GetWindowPositionFromBoard(Vector2Int boardPosition) {
+			return new Vector2(boardPosition.x * _factor + CenterOffsetX,
+				(_board._size.y - 1) * _factor - boardPosition.y * _factor + CenterOffsetY);
+		}
+
 		public void Update() {
 			calculateBoardCenterOffsets();
 			calculateScale();
+			_factor = getFactor();
 		}
 
-		public float GetFactor() {
+		private float getFactor() {
 			return _squareSize * Scale;
 		}
 
