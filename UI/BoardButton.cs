@@ -21,7 +21,7 @@ namespace DChess.UI {
 			Vector2Int recPosition = new Vector2Int(gameScaling.GetWindowPositionFromBoard(_position));
 			int x =  recPosition.x;
 			int y = recPosition.y;
-			int size = (int)(gameScaling._squareSize * gameScaling.Scale);
+			int size = (int)(gameScaling.SquareSize * gameScaling.Scale);
 
 			return new Rectangle(x, y, size, size);
 		}

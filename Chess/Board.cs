@@ -46,7 +46,9 @@ namespace DChess.Chess {
 		}
 
 		public void SelectSquare(Square square) {
-			if (_selectedSquare == null && square.piece != null) {
+			if (_selectedSquare == null 
+				&& square.piece != null 
+				&& square.piece.GetAllLegalMoves(square, this).Count > 0) {
 				legalMovesWithSelected = square.piece.GetAllLegalMoves(square, this);
 				_selectedSquare = square;
 			}

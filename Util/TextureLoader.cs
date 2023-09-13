@@ -86,7 +86,7 @@ namespace DChess.Util {
 				int y = i / baseSize - center;
 
 				if ((x * x) + (y * y) < center * center) {
-					halfCircleData[i] = new Color(Color.White, 0.1f);
+					halfCircleData[i] = Color.White;
 				}
 
 			}

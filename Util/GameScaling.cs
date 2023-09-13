@@ -15,7 +15,7 @@ namespace DChess.Util {
 		private readonly Board _board;
 		private readonly GraphicsDeviceManager _graphics;
 
-		public int _squareSize { get; private set; }
+		public int SquareSize { get; private set; }
 		private int _pieceSize;
 		private int _circleSize;
 
@@ -37,11 +37,11 @@ namespace DChess.Util {
 		}
 
 		public void Initialize() {
-			_squareSize = TextureLoader.SquareTexture.Width;
+			SquareSize = TextureLoader.SquareTexture.Width;
 			_pieceSize = TextureLoader.PawnTexture[0].Width;
 			_circleSize = TextureLoader.Circle.Width;
-			PieceFactor = (float)(_squareSize) / (float)(_pieceSize);
-			CircleFactor = (float)(_squareSize) / (float)(_circleSize);
+			PieceFactor = (float)(SquareSize) / (float)(_pieceSize);
+			CircleFactor = (float)(SquareSize) / (float)(_circleSize);
 		}
 
 		public Vector2 GetWindowPositionFromBoard(Vector2Int boardPosition) {
@@ -56,12 +56,12 @@ namespace DChess.Util {
 		}
 
 		private float getFactor() {
-			return _squareSize * Scale;
+			return SquareSize * Scale;
 		}
 
 		private void calculateBoardCenterOffsets() {
-			float boardWidth = _board._size.x * _squareSize * Scale;
-			float boardheight = _board._size.y * _squareSize * Scale;
+			float boardWidth = _board._size.x * SquareSize * Scale;
+			float boardheight = _board._size.y * SquareSize * Scale;
 
 			float windowWidth = _graphics.PreferredBackBufferWidth;
 			float windowheight = _graphics.PreferredBackBufferHeight;
@@ -71,7 +71,7 @@ namespace DChess.Util {
 		}
 
 		private void calculateScale() {
-			float boardWidthNoScale = _board._size.x * _squareSize;
+			float boardWidthNoScale = _board._size.x * SquareSize;
 
 			float windowheight = _graphics.PreferredBackBufferHeight;
 

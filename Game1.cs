@@ -19,6 +19,7 @@ namespace DChess {
 		// Board variables
 		private readonly Color _lightSquaresColor = new Color(242 / 255f, 225 / 255f, 195 / 255f);
 		private readonly Color _darkSquaresColor = new Color(195 / 255f, 160 / 255f, 130 / 255f);
+		private readonly Color _midColor;
 
 		private readonly Board _board;
 
@@ -30,6 +31,10 @@ namespace DChess {
 
 			_graphics = new GraphicsDeviceManager(this);
 			_gameScaling = new GameScaling(_board, _graphics);
+
+			Vector3 color1 = _lightSquaresColor.ToVector3();
+			Vector3 color2 = _darkSquaresColor.ToVector3();
+			_midColor = new Color((color1.X + color2.X) / 2, (color1.Y + color2.Y) / 2, (color1.Z + color2.Z) / 2);
 
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
@@ -97,7 +102,7 @@ namespace DChess {
 				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.position);
 
 				Color color = (square.team == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
-				drawSprite(spriteBatch, TextureLoader.SquareTexture, windowPosition, color, 0.25f);
+				drawSprite(spriteBatch, TextureLoader.SquareTexture, windowPosition, color, 1);
 			}
 		}
 
@@ -107,7 +112,7 @@ namespace DChess {
 
 				var piece = square.piece;
 				if (piece != null) {
-					drawSprite(spriteBatch, square.piece.GetPieceTexture(), windowPosition, Color.White, 0, _gameScaling.PieceFactor);
+					drawSprite(spriteBatch, square.piece.GetPieceTexture(), windowPosition, Color.White, _gameScaling.PieceFactor);
 				}
 			}
 		}
@@ -118,12 +123,13 @@ namespace DChess {
 				return;
 			}
             foreach (var move in moves) {
-				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(move);
-				drawSprite(spriteBatch, TextureLoader.Circle, windowPosition, Color.White, 0, _gameScaling.CircleFactor);
+				float offset = (_gameScaling.SquareSize / 4) * _gameScaling.Scale;
+				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(move) + new Vector2(offset, offset);
+				drawSprite(spriteBatch, TextureLoader.Circle, windowPosition, _midColor, _gameScaling.CircleFactor * 0.5f);
             }
         }
 
-		private void drawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color color, float layerDepth, float scaleFactor = 1) {
+		private void drawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color color, float scaleFactor = 1) {
 			spriteBatch.Draw(texture: texture, 
 				position: new Vector2(position.X, position.Y), 
 				sourceRectangle: null, 
@@ -132,7 +138,7 @@ namespace DChess {
 				origin: Vector2.Zero, 
 				scale: _gameScaling.Scale * scaleFactor, 
 				effects: SpriteEffects.None, 
-				layerDepth: layerDepth);
+				layerDepth: 0);
 		}
 
 	}
