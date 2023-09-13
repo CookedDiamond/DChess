@@ -19,12 +19,8 @@ namespace DChess.Chess {
 			buttonManager.AddButton(_button);
 		}
 
-		public bool SetPiece(Piece piece) {
-			if (this.piece != null) {
-				return false;
-			}
+		public void SetPiece(Piece piece) {
 			this.piece = piece;
-			return true;
 		}
 
 		public bool RemovePiece() {
@@ -33,6 +29,20 @@ namespace DChess.Chess {
 			}
 			piece = null;
 			return true;
+		}
+
+		public bool IsPieceEnemyTeam(TeamType team) {
+			if (piece == null) {
+				return false;
+			}
+			if (team != piece.team) {
+				return true;
+			}
+			return false;
+		}
+
+		public bool HasPiece() {
+			return piece != null;
 		}
 
 		private void OnClick() {

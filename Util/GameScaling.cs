@@ -17,8 +17,10 @@ namespace DChess.Util {
 
 		public int _squareSize { get; private set; }
 		private int _pieceSize;
+		private int _circleSize;
 
-		public float _pieceFactor { get; private set; }
+		public float PieceFactor { get; private set; }
+		public float CircleFactor { get; private set; }
 		private float _factor = 1;
 
 		public float Scale { get; private set; }
@@ -35,9 +37,11 @@ namespace DChess.Util {
 		}
 
 		public void Initialize() {
-			_squareSize = TextureLoader.SquareTexture.Bounds.Width;
-			_pieceSize = TextureLoader.PawnTexture[0].Bounds.Width;
-			_pieceFactor = (float)(_squareSize) / (float)(_pieceSize);
+			_squareSize = TextureLoader.SquareTexture.Width;
+			_pieceSize = TextureLoader.PawnTexture[0].Width;
+			_circleSize = TextureLoader.Circle.Width;
+			PieceFactor = (float)(_squareSize) / (float)(_pieceSize);
+			CircleFactor = (float)(_squareSize) / (float)(_circleSize);
 		}
 
 		public Vector2 GetWindowPositionFromBoard(Vector2Int boardPosition) {

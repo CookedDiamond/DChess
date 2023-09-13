@@ -4,6 +4,7 @@ using DChess.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 
 namespace DChess {
 	public class Game1 : Game {
@@ -50,6 +51,7 @@ namespace DChess {
 			SpriteBatch = new SpriteBatch(GraphicsDevice);
 
 			TextureLoader.LoadStandardTextures(Content);
+			TextureLoader.LoadPrimitiveShapes(32, _graphics.GraphicsDevice);
 			_font = Content.Load<SpriteFont>("Font");
 
 			_gameScaling.Initialize();
@@ -82,6 +84,8 @@ namespace DChess {
 			SpriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.LinearClamp, null);
 			// Draw Board
 			drawBoard(SpriteBatch);
+			drawLegalMoves(SpriteBatch);
+			drawPieces(SpriteBatch);
 
 			SpriteBatch.End();
 
@@ -90,21 +94,34 @@ namespace DChess {
 
 		private void drawBoard(SpriteBatch spriteBatch) {
 			foreach (var square in _board.GetSquares()) {
-				
 				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.position);
 
-				// Squares
 				Color color = (square.team == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
-				drawSprite(spriteBatch, TextureLoader.SquareTexture, windowPosition, color, 0);
-
-				// Pieces
-				var piece = square.piece;
-				if (piece != null) {
-					drawSprite(spriteBatch, square.piece.GetPieceTexture(), windowPosition, Color.White, 0, _gameScaling._pieceFactor);
-				}
-				
+				drawSprite(spriteBatch, TextureLoader.SquareTexture, windowPosition, color, 0.25f);
 			}
 		}
+
+		private void drawPieces(SpriteBatch spriteBatch) {
+			foreach (var square in _board.GetSquares()) {
+				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.position);
+
+				var piece = square.piece;
+				if (piece != null) {
+					drawSprite(spriteBatch, square.piece.GetPieceTexture(), windowPosition, Color.White, 0, _gameScaling.PieceFactor);
+				}
+			}
+		}
+
+		private void drawLegalMoves(SpriteBatch spriteBatch) {
+			List<Vector2Int> moves = _board.legalMovesWithSelected;
+			if (moves == null) {
+				return;
+			}
+            foreach (var move in moves) {
+				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(move);
+				drawSprite(spriteBatch, TextureLoader.Circle, windowPosition, Color.White, 0, _gameScaling.CircleFactor);
+            }
+        }
 
 		private void drawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Color color, float layerDepth, float scaleFactor = 1) {
 			spriteBatch.Draw(texture: texture, 

@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace DChess.Util {
 	public struct Vector2Int {
+		public static readonly Vector2Int RIGHT = new Vector2Int(1, 0);
+		public static readonly Vector2Int LEFT = new Vector2Int(-1, 0);
+		public static readonly Vector2Int UP = new Vector2Int(0, 1);
+		public static readonly Vector2Int DOWN = new Vector2Int(0, -1);
+
 		public int x { get; set; }
 		public int y { get; set; }
 
@@ -46,7 +51,9 @@ namespace DChess.Util {
 		}
 
 		public override bool Equals(object obj) {
-			throw new NotImplementedException();
+			if (obj is not Vector2Int) return false;
+			Vector2Int compareTo = (Vector2Int)obj;
+			return compareTo.x == x && compareTo.y == y;
 		}
 
 		public override int GetHashCode() {

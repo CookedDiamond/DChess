@@ -1,0 +1,5 @@
+- Legal move checking 
+	- fix in bounds checking!
+- Turns 
+- Capturing 
+- 

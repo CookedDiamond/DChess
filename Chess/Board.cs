@@ -17,11 +17,13 @@ namespace DChess.Chess {
 
 		// Button interacton
 		private Square _selectedSquare = null;
+		public List<Vector2Int> legalMovesWithSelected { get; private set; }
 
 		public Board(Vector2Int size, ButtonManager buttonManager) {
 			_squares = new Square[size.x, size.y];
 			_size = size;
 			_buttonManager = buttonManager;
+			legalMovesWithSelected = new List<Vector2Int>();
 			Initialize();
 		}
 
@@ -35,32 +37,52 @@ namespace DChess.Chess {
 			}
 		}
 
-		public bool PlacePiece(Vector2Int position, Piece piece) {
-			return getSquare(position).SetPiece(piece);
+		public void PlacePiece(Vector2Int position, Piece piece) {
+			GetSquare(position).SetPiece(piece);
 		}
 
 		public bool RemovePiece(Vector2Int position) {
-			return getSquare(position).RemovePiece();
+			return GetSquare(position).RemovePiece();
 		}
 
 		public void SelectSquare(Square square) {
 			if (_selectedSquare == null && square.piece != null) {
+				legalMovesWithSelected = square.piece.GetAllLegalMoves(square, this);
 				_selectedSquare = square;
 			}
 			else if(_selectedSquare != null) {
-				if (PlacePiece(square.position, _selectedSquare.piece)) {
-					RemovePiece(_selectedSquare.position);
-					_selectedSquare = null;
-				}
+				makeMove(_selectedSquare, square);
+				legalMovesWithSelected = new List<Vector2Int>();
+				_selectedSquare = null;
 			}
 		}
 
-		private Square getSquare(Vector2Int position) {
+		private void makeMove(Square from, Square to) {;
+			if (legalMovesWithSelected != null) {
+				if (!legalMovesWithSelected.Contains(to.position)) {
+					return;
+				}
+			}
+			PlacePiece(to.position, _selectedSquare.piece);
+			RemovePiece(_selectedSquare.position);
+		}
+
+		public Square GetSquare(Vector2Int position) {
+			if (!IsInBounds(position)) {
+				return null;
+			}
 			return _squares[position.x, position.y];
 		}
 
 		public Square[,] GetSquares() {
 			return _squares;
+		}
+
+		public bool IsInBounds(Vector2Int vector) {
+			return vector.x >= 0
+				&& vector.y >= 0
+				&& vector.x < _size.x
+				&& vector.y < _size.y;
 		}
 
 		public void Build8x8StandardBoard() {
@@ -89,7 +111,26 @@ namespace DChess.Chess {
 				}
 			}
 		}
+		public static Vector2Int GetTeamDirection(TeamType team) {
+			return team switch {
+				TeamType.White => Vector2Int.UP,
+				TeamType.Black => Vector2Int.DOWN,
+				_ => throw new NotImplementedException()
+			};
+		}
+
+
+
+		public static bool IsStartingPawnRow(TeamType team, int row) {
+			if (team == TeamType.White && row == 1
+				|| team == TeamType.Black && row == 6) {
+				return true;
+			}
+			return false;
+		}
 	}
+
+	
 
 	public enum TeamType {
 		White,
