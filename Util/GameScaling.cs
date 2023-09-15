@@ -46,7 +46,7 @@ namespace DChess.Util {
 
 		public Vector2 GetWindowPositionFromBoard(Vector2Int boardPosition) {
 			return new Vector2(boardPosition.x * _factor + CenterOffsetX,
-				(_board._size.y - 1) * _factor - boardPosition.y * _factor + CenterOffsetY);
+				(_board.Size.y - 1) * _factor - boardPosition.y * _factor + CenterOffsetY);
 		}
 
 		public void Update() {
@@ -60,8 +60,8 @@ namespace DChess.Util {
 		}
 
 		private void calculateBoardCenterOffsets() {
-			float boardWidth = _board._size.x * SquareSize * Scale;
-			float boardheight = _board._size.y * SquareSize * Scale;
+			float boardWidth = _board.Size.x * SquareSize * Scale;
+			float boardheight = _board.Size.y * SquareSize * Scale;
 
 			float windowWidth = _graphics.PreferredBackBufferWidth;
 			float windowheight = _graphics.PreferredBackBufferHeight;
@@ -71,7 +71,7 @@ namespace DChess.Util {
 		}
 
 		private void calculateScale() {
-			float boardWidthNoScale = _board._size.x * SquareSize;
+			float boardWidthNoScale = Math.Max(_board.Size.x, _board.Size.y) * SquareSize;
 
 			float windowheight = _graphics.PreferredBackBufferHeight;
 

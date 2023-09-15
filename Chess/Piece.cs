@@ -40,7 +40,7 @@ namespace DChess.Chess {
 				moves.Add(forward);
 			}
 			if (twoForwardSquare != null
-				&& Board.IsStartingPawnRow(team, fromSquare.position.y) 
+				&& board.IsStartingPawnRow(team, fromSquare.position.y) 
 				&& !twoForwardSquare.HasPiece()) {
 				moves.Add(twoForward);
 			}

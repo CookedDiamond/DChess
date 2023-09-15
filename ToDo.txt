@@ -1,5 +1,12 @@
-- Legal move checking 
-	- fix in bounds checking!
-- Turns 
-- Capturing 
-- 
+- Promoting
+- En passant
+
+- Ideas for chess variants, Board can be a specific game mode.
+	- 6th rank pawn sack for deleting square from board.
+	- Battle royal -> chess board gets smaller (if no piece is in a row/ colum it gets deleted soon)
+	- Random shuffle -> start pieces and others as well.
+- Menu
+- Settings
+- Overlay
+- Server/ Multiplayer
+- Time controll
