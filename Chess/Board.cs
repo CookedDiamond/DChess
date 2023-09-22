@@ -1,4 +1,5 @@
-﻿using DChess.UI;
+﻿using DChess.Chess.Pieces;
+using DChess.UI;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess {
-	public class Board {
+namespace DChess.Chess
+{
+    public class Board {
 		private readonly ButtonManager _buttonManager;
 
 		private Square[,] _squares;
@@ -51,8 +53,8 @@ namespace DChess.Chess {
 			if (_selectedSquare == null
 				&& square.piece != null
 				&& square.piece.team == getTurnTeamType()
-				&& square.piece.GetAllLegalMoves(square, this).Count > 0) {
-				legalMovesWithSelected = square.piece.GetAllLegalMoves(square, this);
+				&& square.piece.GetAllLegalMoves(square).Count > 0) {
+				legalMovesWithSelected = square.piece.GetAllLegalMoves(square);
 				_selectedSquare = square;
 			}
 			else if(_selectedSquare != null) {
@@ -132,27 +134,27 @@ namespace DChess.Chess {
 
 		public void Build8x8StandardBoard() {
 			for (int i = 0; i < Size.x; i++) {
-				PlacePiece(new Vector2Int(i, 1), new Piece(PieceType.Pawn, TeamType.White));
-				PlacePiece(new Vector2Int(i, Size.x - 2), new Piece(PieceType.Pawn, TeamType.Black));
+				PlacePiece(new Vector2Int(i, 1), new PiecePawn(TeamType.White, this));
+				PlacePiece(new Vector2Int(i, Size.x - 2), new PiecePawn(TeamType.Black, this));
 				if (i == 0 || i == Size.x - 1) {
-					PlacePiece(new Vector2Int(i, 0), new Piece(PieceType.Rook, TeamType.White));
-					PlacePiece(new Vector2Int(i, Size.x - 1), new Piece(PieceType.Rook, TeamType.Black));
+					PlacePiece(new Vector2Int(i, 0), new PieceRook(TeamType.White, this));
+					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceRook(TeamType.Black, this));
 				}
 				else if (i == 2 || i == Size.x - 3) {
-					PlacePiece(new Vector2Int(i, 0), new Piece(PieceType.Bishop, TeamType.White));
-					PlacePiece(new Vector2Int(i, Size.x - 1), new Piece(PieceType.Bishop, TeamType.Black));
+					PlacePiece(new Vector2Int(i, 0), new PieceBishop(TeamType.White, this));
+					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceBishop(TeamType.Black, this));
 				}
 				else if (i == 1 || i == Size.x - 2) {
-					PlacePiece(new Vector2Int(i, 0), new Piece(PieceType.Knight, TeamType.White));
-					PlacePiece(new Vector2Int(i, Size.x - 1), new Piece(PieceType.Knight, TeamType.Black));
+					PlacePiece(new Vector2Int(i, 0), new PieceKnight(TeamType.White, this));
+					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceKnight(TeamType.Black, this));
 				}
 				else if (i == 3) {
-					PlacePiece(new Vector2Int(i, 0), new Piece(PieceType.Queen, TeamType.White));
-					PlacePiece(new Vector2Int(i, Size.x - 1), new Piece(PieceType.Queen, TeamType.Black));
+					PlacePiece(new Vector2Int(i, 0), new PieceQueen(TeamType.White, this));
+					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceQueen(TeamType.Black, this));
 				}
 				else if (i == Size.x - 4) {
-					PlacePiece(new Vector2Int(i, 0), new Piece(PieceType.King, TeamType.White));
-					PlacePiece(new Vector2Int(i, Size.x - 1), new Piece(PieceType.King, TeamType.Black));
+					PlacePiece(new Vector2Int(i, 0), new PieceKing(TeamType.White, this));
+					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceKing(TeamType.Black, this));
 				}
 			}
 		}
