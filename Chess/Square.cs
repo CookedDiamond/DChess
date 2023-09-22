@@ -1,9 +1,11 @@
-﻿using DChess.UI;
+﻿using DChess.Chess.Pieces;
+using DChess.UI;
 using DChess.Util;
 using System.Diagnostics;
 
-namespace DChess.Chess {
-	public class Square {
+namespace DChess.Chess
+{
+    public class Square {
 		private readonly Board _board;
 		public Vector2Int position { get; set; }
 		public TeamType team { get; set; }
@@ -32,13 +34,17 @@ namespace DChess.Chess {
 		}
 
 		public bool IsPieceEnemyTeam(TeamType team) {
-			if (piece == null) {
-				return false;
+			bool result;
+			if (piece == null || team == piece.team) {
+				result = false;
 			}
-			if (team != piece.team) {
-				return true;
+			else {
+				result = true;
 			}
-			return false;
+			foreach (var variant in _board.Variants) {
+				result = variant.IsPieceEnemyTeam(result);
+			}
+			return result;
 		}
 
 		public bool HasPiece() {

@@ -1,11 +1,10 @@
-﻿using DChess.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess {
+namespace DChess.Util {
 	public static class MoveHelper {
 
 		public static List<Vector2Int> CombineMoves(List<Vector2Int> moves1, List<Vector2Int> moves2) {

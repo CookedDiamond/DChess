@@ -1,4 +1,5 @@
 ﻿using DChess.Chess.Pieces;
+using DChess.Chess.Variants;
 using DChess.UI;
 using DChess.Util;
 using System;
@@ -9,9 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess
-{
-    public class Board {
+namespace DChess.Chess {
+	public class Board {
 		private readonly ButtonManager _buttonManager;
 
 		private Square[,] _squares;
@@ -23,11 +23,14 @@ namespace DChess.Chess
 
 		private bool _isWhitesTurn = true;
 
+		public List<Variant> Variants { get; set; }
+
 		public Board(Vector2Int size, ButtonManager buttonManager) {
 			_squares = new Square[size.x, size.y];
 			Size = size;
 			_buttonManager = buttonManager;
 			legalMovesWithSelected = new List<Vector2Int>();
+			Variants = new List<Variant>();
 			Initialize();
 		}
 
@@ -57,14 +60,15 @@ namespace DChess.Chess
 				legalMovesWithSelected = square.piece.GetAllLegalMoves(square);
 				_selectedSquare = square;
 			}
-			else if(_selectedSquare != null) {
+			else if (_selectedSquare != null) {
 				makeMove(_selectedSquare, square);
 				legalMovesWithSelected = new List<Vector2Int>();
 				_selectedSquare = null;
 			}
 		}
 
-		private void makeMove(Square from, Square to) {;
+		private void makeMove(Square from, Square to) {
+			;
 			if (legalMovesWithSelected != null) {
 				if (!legalMovesWithSelected.Contains(to.position)) {
 					return;
@@ -110,7 +114,7 @@ namespace DChess.Chess
 		private List<Vector2Int> getPiecesFromType(PieceType pieceType, TeamType teamType) {
 			List<Vector2Int> result = new();
 			foreach (var square in _squares) {
-				if (square.piece != null 
+				if (square.piece != null
 					&& square.piece.type == pieceType
 					&& square.piece.team == teamType) {
 					result.Add(square.position);
@@ -166,10 +170,10 @@ namespace DChess.Chess
 				_ => throw new NotImplementedException()
 			};
 		}
-		
+
 	}
 
-	
+
 
 	public enum TeamType {
 		White,

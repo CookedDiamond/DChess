@@ -1,13 +1,16 @@
 - Promoting
 - En passant
+- Castling
 
 - Ideas for chess variants, Board can be a specific game mode.
 	- 6th rank pawn sack for deleting square from board.
 	- Battle royal -> chess board gets smaller (if no piece is in a row/ colum it gets deleted soon)
-	- friendly fire
 	- 2 kings
 	- connected lacer rooks
+	- round board
 - Menu
+	- Scenes
+	- Buttons with text and background
 - Settings
 - Overlay
 - Server/ Multiplayer

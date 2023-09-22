@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess {
+namespace DChess.Chess.Pieces {
 	public class Piece {
 		public PieceType type { get; set; }
 
@@ -89,7 +89,7 @@ namespace DChess.Chess {
 			};
 		}
 
-		private String teamAsString() {
+		private string teamAsString() {
 			return team switch {
 				TeamType.Black => "black",
 				TeamType.White => "white",

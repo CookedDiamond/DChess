@@ -49,6 +49,15 @@ namespace DChess.Util {
 				(_board.Size.y - 1) * _factor - boardPosition.y * _factor + CenterOffsetY);
 		}
 
+		public Vector2 GetWindowPositionFromAlignment(WindowAlignment windowAlignment, Vector2 size) {
+			if (windowAlignment == WindowAlignment.BoardLeftCenter) {
+				new Vector2(CenterOffsetX - size.X
+					, GetWindowPositionFromBoard(new Vector2Int(0, _board.Size.y)).Y / 2f + _factor / 2);
+			}
+
+			return Vector2.Zero;
+		}
+
 		public void Update() {
 			calculateBoardCenterOffsets();
 			calculateScale();
@@ -79,5 +88,12 @@ namespace DChess.Util {
 			Scale = MathHelper.Clamp(scale, _minScale, _maxScale);
 		}
 
+	}
+
+	public enum WindowAlignment {
+		RightTop,
+		BoardRightTop,
+		BoardRightBottom,
+		BoardLeftCenter
 	}
 }
