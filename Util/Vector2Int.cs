@@ -12,6 +12,7 @@ namespace DChess.Util {
 		public static readonly Vector2Int LEFT = new Vector2Int(-1, 0);
 		public static readonly Vector2Int UP = new Vector2Int(0, 1);
 		public static readonly Vector2Int DOWN = new Vector2Int(0, -1);
+		public static readonly Vector2Int ZERO = new Vector2Int(0, 0);
 
 		public int x { get; set; }
 		public int y { get; set; }

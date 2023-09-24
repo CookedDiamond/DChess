@@ -8,17 +8,17 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DChess.UI {
-	public class BoardButton : Button {
+	public class ButtonBoard : Button {
 		private readonly Vector2Int _position;
 
-		public BoardButton(Vector2Int position) : base() {
+		public ButtonBoard(Vector2Int position) : base() {
 			_position = position;
 		}
 
 		protected override Rectangle GetButtonRectangle() {
 			GameScaling gameScaling = GameScaling.Instance;
 
-			Vector2Int recPosition = new Vector2Int(gameScaling.GetWindowPositionFromBoard(_position));
+			Vector2Int recPosition = new(gameScaling.GetWindowPositionFromBoard(_position));
 			int x =  recPosition.x;
 			int y = recPosition.y;
 			int size = (int)(gameScaling.SquareSize * gameScaling.Scale);

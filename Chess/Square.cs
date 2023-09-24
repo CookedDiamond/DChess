@@ -16,7 +16,7 @@ namespace DChess.Chess
 			_board = board;
 			this.position = position;
 			this.team = team;
-			_button = new BoardButton(position);
+			_button = new ButtonBoard(position);
 			_button.OnClickEvent += () => OnClick();
 			buttonManager.AddButton(_button);
 		}
@@ -42,7 +42,7 @@ namespace DChess.Chess
 				result = true;
 			}
 			foreach (var variant in _board.Variants) {
-				result = variant.IsPieceEnemyTeam(result);
+				result = variant.IsPieceEnemyTeam(result, piece);
 			}
 			return result;
 		}

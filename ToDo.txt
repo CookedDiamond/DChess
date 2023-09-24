@@ -1,7 +1,13 @@
-- Promoting
-- En passant
-- Castling
+---------------------------------------------------------------------------------------------------
+?: do maybe
+-: should do
+!: do next
+(-): do later
+---------------------------------------------------------------------------------------------------
 
+- Promoting
+? En passant
+? Castling
 - Ideas for chess variants, Board can be a specific game mode.
 	- 6th rank pawn sack for deleting square from board.
 	- Battle royal -> chess board gets smaller (if no piece is in a row/ colum it gets deleted soon)
@@ -9,9 +15,16 @@
 	- connected lacer rooks
 	- round board
 - Menu
-	- Scenes
 	- Buttons with text and background
 - Settings
 - Overlay
 - Server/ Multiplayer
 - Time controll
+- InputHandler
+- Seperate UI from logic with buttons in square/ board
+(- Think about better gamescaling architecture)
+- Text Button 
+	- add background 
+		(- with on click feedback)
+	- add string legth identifier and center text alignment in buttons
+

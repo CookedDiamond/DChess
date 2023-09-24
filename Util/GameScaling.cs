@@ -49,10 +49,19 @@ namespace DChess.Util {
 				(_board.Size.y - 1) * _factor - boardPosition.y * _factor + CenterOffsetY);
 		}
 
-		public Vector2 GetWindowPositionFromAlignment(WindowAlignment windowAlignment, Vector2 size) {
+		public Vector2 GetWindowPositionFromAlignment(WindowAlignment windowAlignment, Vector2Int size) {
 			if (windowAlignment == WindowAlignment.BoardLeftCenter) {
-				new Vector2(CenterOffsetX - size.X
-					, GetWindowPositionFromBoard(new Vector2Int(0, _board.Size.y)).Y / 2f + _factor / 2);
+				Vector2 boardPos = GetWindowPositionFromBoard(new Vector2Int(0, _board.Size.y / 2));
+				float verticalOffset = (_board.Size.y % 2 == 0) ? _factor / 2 : 0;
+				return new Vector2(CenterOffsetX - size.x
+					, boardPos.Y + verticalOffset);
+			}
+
+			else if (windowAlignment == WindowAlignment.Center) {
+				float windowHeight = _graphics.PreferredBackBufferHeight;
+				float windowWidth = _graphics.PreferredBackBufferWidth;
+
+				return new Vector2(windowWidth / 2 - size.x / 2, windowHeight / 2 - size.y / 2);
 			}
 
 			return Vector2.Zero;
@@ -91,9 +100,7 @@ namespace DChess.Util {
 	}
 
 	public enum WindowAlignment {
-		RightTop,
-		BoardRightTop,
-		BoardRightBottom,
+		Center,
 		BoardLeftCenter
 	}
 }
