@@ -39,7 +39,7 @@ namespace DChess.Util {
 		public void Initialize() {
 			SquareSize = TextureLoader.SquareTexture.Width;
 			_pieceSize = TextureLoader.PawnTexture[0].Width;
-			_circleSize = TextureLoader.Circle.Width;
+			_circleSize = TextureLoader.CircleTexture.Width;
 			PieceFactor = (float)(SquareSize) / (float)(_pieceSize);
 			CircleFactor = (float)(SquareSize) / (float)(_circleSize);
 		}
@@ -61,7 +61,7 @@ namespace DChess.Util {
 				float windowHeight = _graphics.PreferredBackBufferHeight;
 				float windowWidth = _graphics.PreferredBackBufferWidth;
 
-				return new Vector2(windowWidth / 2 - size.x / 2, windowHeight / 2 - size.y / 2);
+				return new Vector2(windowWidth / 2 - (size.x * Scale) / 2, windowHeight / 2 - (size.y * Scale) / 2);
 			}
 
 			return Vector2.Zero;
@@ -96,11 +96,11 @@ namespace DChess.Util {
 			float scale = (windowheight * 0.9f) / boardWidthNoScale;
 			Scale = MathHelper.Clamp(scale, _minScale, _maxScale);
 		}
-
 	}
 
 	public enum WindowAlignment {
 		Center,
-		BoardLeftCenter
+		BoardLeftCenter,
+		Zero
 	}
 }

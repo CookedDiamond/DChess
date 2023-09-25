@@ -8,18 +8,18 @@ using System.Threading.Tasks;
 namespace DChess.UI {
 	public class ButtonManager {
 
-		private List<Button> buttons = new List<Button>();
+		private readonly List<Button> _buttons = new();
 
 		public ButtonManager() {
 
 		}
 
 		public void AddButton(Button button) {
-			buttons.Add(button);
+			_buttons.Add(button);
 		}
 
 		public void OnClick(Vector2Int mousePosition) {
-			foreach (Button button in buttons) {
+			foreach (Button button in _buttons) {
 				button.TriggerButton(mousePosition);
 			}
 		}

@@ -7,13 +7,11 @@ using DChess.UI.Scenes;
 using DChess.Util;
 using Microsoft.Xna.Framework;
 
-var buttonManager = new ButtonManager();
-
-var board = new Board(new Vector2Int(9, 9), buttonManager);
+var board = new Board(new Vector2Int(9, 9));
 board.Build8x8StandardBoard();
 board.Variants.Add(new VariantFriendlyFire());
 
-var game = new Game1(board, buttonManager);
+var game = new Game1(board);
 game.SwitchScene(GameScenes.Menu);
 game.Run();
 

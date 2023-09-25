@@ -15,16 +15,17 @@
 	- connected lacer rooks
 	- round board
 - Menu
-	- Buttons with text and background
+	- Start Game
 - Settings
 - Overlay
 - Server/ Multiplayer
 - Time controll
 - InputHandler
-- Seperate UI from logic with buttons in square/ board
 (- Think about better gamescaling architecture)
 - Text Button 
-	- add background 
-		(- with on click feedback)
-	- add string legth identifier and center text alignment in buttons
+	(- on click feedback)
+	- center text in button
 
+
+line count: 
+git ls-files | grep '\.cs' | xargs wc -l

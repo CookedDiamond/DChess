@@ -58,7 +58,7 @@ namespace DChess.Util {
 		}
 
 		public override int GetHashCode() {
-			throw new NotImplementedException();
+			return new Vector2(x,y).GetHashCode();
 		}
 	}
 }

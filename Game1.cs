@@ -11,7 +11,6 @@ using System.Collections.Generic;
 namespace DChess {
 	public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
-		private readonly ButtonManager _buttonManager;
 		private static GameScaling _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
@@ -26,15 +25,14 @@ namespace DChess {
 		private Scene _boardScene;
 		private Scene _currentScene;
 
-		public Game1(Board board, ButtonManager buttonManager) {
+		public Game1(Board board) {
 			_board = board;
-			_buttonManager = buttonManager;
 
 			_graphics = new GraphicsDeviceManager(this);
 			_gameScaling = new GameScaling(_board, _graphics);
 
 			_boardScene = new SceneBoard(board);
-			_menuScene = new SceneMenu(buttonManager);
+			_menuScene = new SceneMenu();
 
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
@@ -54,10 +52,8 @@ namespace DChess {
 		protected override void LoadContent() {
 			SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-			TextureLoader.LoadStandardTextures(Content);
-			TextureLoader.LoadPrimitiveShapes(32, _graphics.GraphicsDevice);
+			TextureLoader.InitialiceTextures(_graphics.GraphicsDevice, Content, 32);
 			Font = Content.Load<SpriteFont>("Font");
-
 			_gameScaling.Initialize();
 		}
 
@@ -69,7 +65,7 @@ namespace DChess {
 
 			var mouseState = Mouse.GetState();
 			if (_lastMouseStateWasPressed && mouseState.LeftButton == ButtonState.Released) {
-				_buttonManager.OnClick(new Vector2Int(mouseState.X, mouseState.Y));
+				_currentScene.MouseClick(new Vector2Int(mouseState.X, mouseState.Y));
 			}
 
 			if (mouseState.LeftButton == ButtonState.Pressed) {

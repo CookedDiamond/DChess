@@ -28,6 +28,16 @@ namespace DChess.UI.Scenes {
 			Vector3 color1 = _lightSquaresColor.ToVector3();
 			Vector3 color2 = _darkSquaresColor.ToVector3();
 			_midColor = new Color((color1.X + color2.X) / 2, (color1.Y + color2.Y) / 2, (color1.Z + color2.Z) / 2);
+
+			InitializeBoardButtons();
+		}
+
+		private void InitializeBoardButtons() {
+			foreach (var square in _board.GetSquares()) {
+				var button = new ButtonBoard(square.position);
+				button.OnClickEvent += () => square.OnClick();
+				buttonManager.AddButton(button);
+			}
 		}
 
 		public override void Draw(SpriteBatch spriteBatch) {
@@ -56,7 +66,7 @@ namespace DChess.UI.Scenes {
 			foreach (var move in moves) {
 				float offset = (_gameScaling.SquareSize / 4) * _gameScaling.Scale;
 				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(move) + new Vector2(offset, offset);
-				spriteBatch.DrawSprite(TextureLoader.Circle, windowPosition, _midColor, _gameScaling.CircleFactor * 0.5f);
+				spriteBatch.DrawSprite(TextureLoader.CircleTexture, windowPosition, _midColor, _gameScaling.CircleFactor * 0.5f);
 			}
 		}
 

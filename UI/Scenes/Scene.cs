@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using DChess.Util;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,13 @@ namespace DChess.UI.Scenes {
 
 		protected List<IDrawable> content = new();
 
+		protected ButtonManager buttonManager = new();
+
 		public Color BackGroundColor { get; protected set; } = Color.White;
+
+		public void MouseClick(Vector2Int mousePos) {
+			buttonManager.OnClick(mousePos);
+		}
 
 		public virtual void Draw(SpriteBatch spriteBatch) {
 			if (content == null) return;

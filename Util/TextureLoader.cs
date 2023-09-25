@@ -2,9 +2,16 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DChess.Util {
 	public class TextureLoader {
+		// Dependencies.
+		private static GraphicsDevice _graphics;
+		private static ContentManager _content;
+
+		// Chess textures.
 		public static Texture2D[] PawnTexture { get; private set; }
 		public static Texture2D[] BishopTexture { get; private set; }
 		public static Texture2D[] KnightTexture { get; private set; }
@@ -15,9 +22,17 @@ namespace DChess.Util {
 		// Primitive shapes.
 		public static Texture2D SquareTexture { get; private set; }
 		public static Texture2D RectangleBorderTexture { get; private set; }
-		public static Texture2D Circle { get; private set; }
+		public static Texture2D CircleTexture { get; private set; }
+		private static readonly Dictionary<Vector2Int, Texture2D> _customRectangleTextures = new();
 
-		public static void LoadStandardTextures(ContentManager content) {
+		public static void InitialiceTextures(GraphicsDevice graphics, ContentManager content, int baseSize) {
+			_graphics = graphics;
+			_content = content;
+			loadStandardTextures();
+			loadPrimitiveShapes(baseSize);
+		}
+
+		private static void loadStandardTextures() {
 			PawnTexture = new Texture2D[2];
 			BishopTexture = new Texture2D[2];
 			KnightTexture = new Texture2D[2];
@@ -25,39 +40,40 @@ namespace DChess.Util {
 			QueenTexture = new Texture2D[2];
 			KingTexture = new Texture2D[2];
 
-			PawnTexture[0] = content.Load<Texture2D>("pawn_white");
-			BishopTexture[0] = content.Load<Texture2D>("bishop_white");
-			KnightTexture[0] = content.Load<Texture2D>("knight_white");
-			RookTexture[0] = content.Load<Texture2D>("rook_white");
-			QueenTexture[0] = content.Load<Texture2D>("queen_white");
-			KingTexture[0] = content.Load<Texture2D>("king_white");
+			PawnTexture[0] = _content.Load<Texture2D>("pawn_white");
+			BishopTexture[0] = _content.Load<Texture2D>("bishop_white");
+			KnightTexture[0] = _content.Load<Texture2D>("knight_white");
+			RookTexture[0] = _content.Load<Texture2D>("rook_white");
+			QueenTexture[0] = _content.Load<Texture2D>("queen_white");
+			KingTexture[0] = _content.Load<Texture2D>("king_white");
 
-			PawnTexture[1] = content.Load<Texture2D>("pawn_black");
-			BishopTexture[1] = content.Load<Texture2D>("bishop_black");
-			KnightTexture[1] = content.Load<Texture2D>("knight_black");
-			RookTexture[1] = content.Load<Texture2D>("rook_black");
-			QueenTexture[1] = content.Load<Texture2D>("queen_black");
-			KingTexture[1] = content.Load<Texture2D>("king_black");
+			PawnTexture[1] = _content.Load<Texture2D>("pawn_black");
+			BishopTexture[1] = _content.Load<Texture2D>("bishop_black");
+			KnightTexture[1] = _content.Load<Texture2D>("knight_black");
+			RookTexture[1] = _content.Load<Texture2D>("rook_black");
+			QueenTexture[1] = _content.Load<Texture2D>("queen_black");
+			KingTexture[1] = _content.Load<Texture2D>("king_black");
 
 		}
 
-		public static void LoadPrimitiveShapes(int baseSize, GraphicsDevice graphics) {
-			createSquare(baseSize, graphics);
-			createCircle(baseSize, graphics);
-			createRectangleBorder(baseSize, graphics);
+		private static void loadPrimitiveShapes(int baseSize) {
+			SquareTexture = createRectangle(new Vector2Int(baseSize, baseSize));
+			CircleTexture = createCircle(baseSize);
+			RectangleBorderTexture = createRectangleBorder(baseSize);
 		}
 
-		private static void createSquare(int baseSize, GraphicsDevice graphics) {
-			Color[] squareData = new Color[baseSize * baseSize];
+		private static Texture2D createRectangle(Vector2Int baseSize) {
+			Color[] squareData = new Color[baseSize.x * baseSize.y];
 			for (int i = 0; i < squareData.Length; ++i) {
 				squareData[i] = Color.White;
 			}
 
-			SquareTexture = new Texture2D(graphics, baseSize, baseSize);
-			SquareTexture.SetData(squareData);
+			var texture = new Texture2D(_graphics, baseSize.x, baseSize.y);
+			texture.SetData(squareData);
+			return texture;
 		}
 
-		private static void createRectangleBorder(int baseSize, GraphicsDevice graphics) {
+		private static Texture2D createRectangleBorder(int baseSize) {
 			Color[] rectangleBorderData = new Color[baseSize * baseSize];
 			for (int i = 0; i < rectangleBorderData.Length; ++i) {
 				int x = i % baseSize;
@@ -71,11 +87,12 @@ namespace DChess.Util {
 				}
 			}
 
-			RectangleBorderTexture = new Texture2D(graphics, baseSize, baseSize);
-			RectangleBorderTexture.SetData(rectangleBorderData);
+			var texture = new Texture2D(_graphics, baseSize, baseSize);
+			texture.SetData(rectangleBorderData);
+			return texture;
 		}
 
-		private static void createCircle(int baseSize, GraphicsDevice graphics) {
+		private static Texture2D createCircle(int baseSize) {
 			// Increase the resolution so the scaling looks better.
 			baseSize *= 4;
 
@@ -91,8 +108,21 @@ namespace DChess.Util {
 
 			}
 
-			Circle = new Texture2D(graphics, baseSize, baseSize);
-			Circle.SetData(halfCircleData);
+			var texture = new Texture2D(_graphics, baseSize, baseSize);
+			texture.SetData(halfCircleData);
+			return texture;
 		}
+
+		public static Texture2D GetOrGenerateRectangleTexture(Vector2Int size) {
+			_customRectangleTextures.TryGetValue(size, out Texture2D texture);
+			if (texture == null)
+            {
+				Debug.WriteLine($"Created new texture with size {size}");
+				var createdTexture = createRectangle(size);
+				_customRectangleTextures.Add(size, createdTexture);
+				texture = createdTexture;
+			}
+			return texture;
+        }
 	}
 }

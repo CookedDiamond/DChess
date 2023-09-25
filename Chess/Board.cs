@@ -12,8 +12,6 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess {
 	public class Board {
-		private readonly ButtonManager _buttonManager;
-
 		private Square[,] _squares;
 		public Vector2Int Size { get; set; }
 
@@ -25,10 +23,9 @@ namespace DChess.Chess {
 
 		public List<Variant> Variants { get; set; }
 
-		public Board(Vector2Int size, ButtonManager buttonManager) {
+		public Board(Vector2Int size) {
 			_squares = new Square[size.x, size.y];
 			Size = size;
-			_buttonManager = buttonManager;
 			legalMovesWithSelected = new List<Vector2Int>();
 			Variants = new List<Variant>();
 			Initialize();
@@ -39,7 +36,7 @@ namespace DChess.Chess {
 				for (int y = 0; y < Size.y; y++) {
 					byte b = (byte)((byte)(x + 9 * y) % 2);
 					TeamType teamType = (b == 0) ? TeamType.White : TeamType.Black;
-					_squares[x, y] = new Square(this, new Vector2Int(x, y), teamType, _buttonManager);
+					_squares[x, y] = new Square(this, new Vector2Int(x, y), teamType);
 				}
 			}
 		}

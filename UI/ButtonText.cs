@@ -1,4 +1,5 @@
-﻿using DChess.Util;
+﻿using DChess.Extensions;
+using DChess.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -13,33 +14,37 @@ namespace DChess.UI {
 		private string _text;
 		private Vector2Int _size;
 		private WindowAlignment _alignment;
-		private Color _color;
+		private Color _textColor;
+		private Color _backGroundColor;
 
 		private readonly GameScaling _gameScaling;
 
-		public ButtonText(string text, WindowAlignment alignment, Vector2Int size, Color color) : base() {
+		public ButtonText(string text, WindowAlignment alignment, Vector2Int size, Color textColor, Color backGroundColor) : base() {
 			_text = text;
 			_alignment = alignment;
 			_size = size;
-			_color = color;
+			_textColor = textColor;
+			_backGroundColor = backGroundColor;
 
 			_gameScaling = GameScaling.Instance;
 		}
 
-		public ButtonText(string text, WindowAlignment alignment, Vector2Int size) : this(text, alignment, size, Color.Black) { }
+		public ButtonText(string text, WindowAlignment alignment, Vector2Int size) : this(text, alignment, size, Color.Black, Color.Transparent) { }
 
 		protected override Rectangle GetButtonRectangle() {
 			Vector2Int pos = new(_gameScaling.GetWindowPositionFromAlignment(_alignment, _size));
+			float scale = _gameScaling.Scale;
 
-			return new Rectangle(pos.x, pos.y, _size.x, _size.y);
+			return new Rectangle(pos.x, pos.y, (int)(_size.x * scale), (int)(_size.y * scale));
 		}
 
 
 
 		public void Draw(SpriteBatch spriteBatch) {
-			Vector2 pos = _gameScaling.GetWindowPositionFromAlignment(_alignment, _size);
-
-			spriteBatch.DrawString(Game1.Font, _text, pos, _color);
+			Rectangle rect = GetButtonRectangle();
+			Vector2 pos = new Vector2(rect.X, rect.Y);
+			spriteBatch.DrawSprite(TextureLoader.GetOrGenerateRectangleTexture(_size), pos, _backGroundColor);
+			spriteBatch.DrawBoundedText(_text, pos, _textColor, new Vector2Int(rect.Width, rect.Height), Game1.Font);
 		}
 	}
 }
