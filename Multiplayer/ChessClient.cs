@@ -17,7 +17,7 @@ namespace DChess.Multiplayer {
 
 		public ChessClient(Board board) {
 			_board = board;
-			Connect("127.0.0.1");
+			Connect("192.168.2.117");
 		}
 
 		private void Connect(string server) {
