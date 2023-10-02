@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace DChess.UI.Scenes {
 	public class SceneBoard : Scene {
 		private readonly Board _board;
-		private readonly GameScaling _gameScaling;
+		private readonly ScalingUtil _gameScaling;
 
 		// Color variables.
 		private readonly Color _midColor;
@@ -21,13 +21,11 @@ namespace DChess.UI.Scenes {
 
 		public SceneBoard(Board board) {
 			_board = board;
-			_gameScaling = GameScaling.Instance;
+			_gameScaling = ScalingUtil.Instance;
 
 			BackGroundColor = Color.DarkSeaGreen;
 
-			Vector3 color1 = _lightSquaresColor.ToVector3();
-			Vector3 color2 = _darkSquaresColor.ToVector3();
-			_midColor = new Color((color1.X + color2.X) / 2, (color1.Y + color2.Y) / 2, (color1.Z + color2.Z) / 2);
+			_midColor = _lightSquaresColor.AverageColor(_darkSquaresColor);
 
 			InitializeBoardButtons();
 		}

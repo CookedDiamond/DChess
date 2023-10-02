@@ -1,11 +1,11 @@
 ---------------------------------------------------------------------------------------------------
 ?: do maybe
 -: should do
-!: do next
+!: do really soon
 (-): do later
 ---------------------------------------------------------------------------------------------------
 
-- Promoting
+(- Promoting)
 ? En passant
 ? Castling
 - Ideas for chess variants, Board can be a specific game mode.
@@ -16,18 +16,19 @@
 	- round board
 - Menu
 	- Start Game
-- Settings
-- Overlay
-- Server/ Multiplayer
-- Time controll
+? Settings
+- Settings in textfile (json)
+(- Overlay)
+(- Time controll)
 - InputHandler
 (- Think about better gamescaling architecture)
 - Text Button 
 	(- on click feedback)
 	- center text in button
-- Menu scaling disjoint from board size!
 - remove networking from board
-- inform about write/ thread/ async/ close on windows "x"
+- inform about write in stream with different threads
+? use async read and other async methods instead of while(true) with threads
+	- close the 'while true threads' with windows "x"
 
 
 line count: 

@@ -20,7 +20,7 @@ namespace DChess.Extensions {
 				color: color,
 				rotation: 0,
 				origin: Vector2.Zero,
-				scale: GameScaling.Instance.Scale * scaleFactor,
+				scale: ScalingUtil.Instance.Scale * scaleFactor,
 				effects: SpriteEffects.None,
 				layerDepth: 0);
 		}
@@ -37,7 +37,7 @@ namespace DChess.Extensions {
 			//float yOffset = (bound.y - textSize.Y) / 2;
 			//position += Vector2.UnitY * yOffset;
 
-			position -= Vector2.UnitY * fontPixelOffsetY * GameScaling.Instance.Scale;
+			position -= Vector2.UnitY * fontPixelOffsetY * ScalingUtil.Instance.Scale;
 
 			spriteBatch.DrawString(font, text, position, color, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
 		}

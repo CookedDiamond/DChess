@@ -20,6 +20,10 @@ namespace DChess.UI.Scenes {
 			buttonManager.OnClick(mousePos);
 		}
 
+		public void MouseHover(Vector2Int mousePos) {
+			buttonManager.OnHover(mousePos);
+		}
+
 		public virtual void Draw(SpriteBatch spriteBatch) {
 			if (content == null) return;
 

@@ -10,10 +10,6 @@ namespace DChess.UI {
 
 		private readonly List<Button> _buttons = new();
 
-		public ButtonManager() {
-
-		}
-
 		public void AddButton(Button button) {
 			_buttons.Add(button);
 		}
@@ -21,6 +17,12 @@ namespace DChess.UI {
 		public void OnClick(Vector2Int mousePosition) {
 			foreach (Button button in _buttons) {
 				button.TriggerButton(mousePosition);
+			}
+		}
+
+		public void OnHover(Vector2Int mousePosition) {
+			foreach (Button button in _buttons) { 
+				button.HoverButton(mousePosition);
 			}
 		}
 	}

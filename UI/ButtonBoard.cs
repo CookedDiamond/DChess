@@ -16,7 +16,7 @@ namespace DChess.UI {
 		}
 
 		protected override Rectangle GetButtonRectangle() {
-			GameScaling gameScaling = GameScaling.Instance;
+			ScalingUtil gameScaling = ScalingUtil.Instance;
 
 			Vector2Int recPosition = new(gameScaling.GetWindowPositionFromBoard(_position));
 			int x =  recPosition.x;

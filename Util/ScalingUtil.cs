@@ -3,17 +3,19 @@ using Microsoft.Xna.Framework;
 using SharpDX.Direct2D1.Effects;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DChess.Util {
-	public class GameScaling {
-		public static GameScaling Instance { get; private set; }
+	public class ScalingUtil {
+		public static ScalingUtil Instance { get; private set; }
 
 		private readonly Board _board;
 		private readonly GraphicsDeviceManager _graphics;
+		private readonly Game1 _game;
 
 		public int SquareSize { get; private set; }
 		private int _pieceSize;
@@ -26,13 +28,15 @@ namespace DChess.Util {
 		public float Scale { get; private set; }
 		private readonly float _minScale = .5f;
 		private readonly float _maxScale = 4f;
+		private readonly float _menuScaleFactor = 4;
 
 		public float CenterOffsetX { get; private set; }
 		public float CenterOffsetY { get; private set; }
 
-		public GameScaling(Board board, GraphicsDeviceManager graphics) {
+		public ScalingUtil(Board board, Game1 game, GraphicsDeviceManager graphics) {
 			_board = board;
 			_graphics = graphics;
+			_game = game;
 			Instance ??= this;
 		}
 
@@ -69,7 +73,12 @@ namespace DChess.Util {
 
 		public void Update() {
 			calculateBoardCenterOffsets();
-			calculateScale();
+			if (_game.ActiveSceneType == SceneType.Board) {
+				Scale = calculateScaleFromBoard();
+			}
+			else if (_game.ActiveSceneType == SceneType.Menu) {
+				Scale = calculateScaleFromWindowSize();
+			}
 			_factor = getFactor();
 		}
 
@@ -88,13 +97,21 @@ namespace DChess.Util {
 			CenterOffsetY = (windowheight - boardheight) / 2;
 		}
 
-		private void calculateScale() {
+		private float calculateScaleFromBoard() {
 			float boardWidthNoScale = Math.Max(_board.Size.x, _board.Size.y) * SquareSize;
 
-			float windowheight = _graphics.PreferredBackBufferHeight;
+			float windowHeight = _graphics.PreferredBackBufferHeight;
 
-			float scale = (windowheight * 0.9f) / boardWidthNoScale;
-			Scale = MathHelper.Clamp(scale, _minScale, _maxScale);
+			float scale = (windowHeight * 0.9f) / boardWidthNoScale;
+			return MathHelper.Clamp(scale, _minScale, _maxScale);
+		}
+
+		private float calculateScaleFromWindowSize() {
+			float windowHeight = _graphics.PreferredBackBufferHeight;
+			float windowWidth = _graphics.PreferredBackBufferWidth;
+			float normalX = 1920;
+			float normalY = 1080;
+			return Math.Min(windowHeight / normalY, windowWidth / normalX) * _menuScaleFactor;
 		}
 	}
 

@@ -11,7 +11,7 @@ using System.Collections.Generic;
 namespace DChess {
 	public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
-		private static GameScaling _gameScaling;
+		private static ScalingUtil _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
 		// Mouse variables TODO: make Inputhandler Class
@@ -23,13 +23,14 @@ namespace DChess {
 
 		private Scene _menuScene;
 		private Scene _boardScene;
-		private Scene _currentScene;
+		private Scene _activeScene;
+		public SceneType ActiveSceneType { get; private set; }
 
 		public Game1(Board board) {
 			_board = board;
 
 			_graphics = new GraphicsDeviceManager(this);
-			_gameScaling = new GameScaling(_board, _graphics);
+			_gameScaling = new ScalingUtil(_board, this, _graphics);
 
 			_boardScene = new SceneBoard(board);
 			_menuScene = new SceneMenu(this, board);
@@ -64,8 +65,10 @@ namespace DChess {
 			_gameScaling.Update();
 
 			var mouseState = Mouse.GetState();
+			var mousePos = new Vector2Int(mouseState.X, mouseState.Y);
+			_activeScene.MouseHover(mousePos);
 			if (_lastMouseStateWasPressed && mouseState.LeftButton == ButtonState.Released) {
-				_currentScene.MouseClick(new Vector2Int(mouseState.X, mouseState.Y));
+				_activeScene.MouseClick(mousePos);
 			}
 
 			if (mouseState.LeftButton == ButtonState.Pressed) {
@@ -78,30 +81,36 @@ namespace DChess {
 			base.Update(gameTime);
 		}
 
-		public void SwitchScene(GameScenes scene) {
-			_ = scene switch {
-				GameScenes.Board => _currentScene = _boardScene,
-				GameScenes.Menu => _currentScene = _menuScene,
-				_ => throw new NotImplementedException()
-			};
+		public void SwitchScene(SceneType scene) {
+			switch (scene) {
+				case SceneType.Board:
+					_activeScene = _boardScene;
+					break;
+				case SceneType.Menu:
+					_activeScene = _menuScene;
+					break;
+				default:
+					throw new NotImplementedException();
+			}
+			ActiveSceneType = scene;
 		}
 
 		protected override void Draw(GameTime gameTime) {
-			if (_currentScene == null) {
+			if (_activeScene == null) {
 				return;
 			}
 
-			GraphicsDevice.Clear(_currentScene.BackGroundColor);
+			GraphicsDevice.Clear(_activeScene.BackGroundColor);
 
 			SpriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.LinearClamp, null);
-			_currentScene.Draw(SpriteBatch);
+			_activeScene.Draw(SpriteBatch);
 			SpriteBatch.End();
 
 			base.Draw(gameTime);
 		}
 	}
 
-	public enum GameScenes {
+	public enum SceneType {
 		None,
 		Board,
 		Menu

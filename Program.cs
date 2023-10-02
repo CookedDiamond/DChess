@@ -15,6 +15,6 @@ board.Build8x8StandardBoard();
 board.Variants.Add(new VariantFriendlyFire());
 
 var game = new Game1(board);
-game.SwitchScene(GameScenes.Menu);
+game.SwitchScene(SceneType.Menu);
 game.Run();
 
