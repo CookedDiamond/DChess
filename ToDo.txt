@@ -25,6 +25,9 @@
 - Text Button 
 	(- on click feedback)
 	- center text in button
+- Menu scaling disjoint from board size!
+- remove networking from board
+- inform about write/ thread/ async/ close on windows "x"
 
 
 line count: 

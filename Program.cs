@@ -6,8 +6,11 @@ using DChess.UI;
 using DChess.UI.Scenes;
 using DChess.Util;
 using Microsoft.Xna.Framework;
+using System;
 
-var board = new Board(new Vector2Int(9, 9));
+Console.Read();
+
+var board = new Board(new Vector2Int(6, 6));
 board.Build8x8StandardBoard();
 board.Variants.Add(new VariantFriendlyFire());
 

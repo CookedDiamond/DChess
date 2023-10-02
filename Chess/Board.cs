@@ -1,5 +1,6 @@
 ﻿using DChess.Chess.Pieces;
 using DChess.Chess.Variants;
+using DChess.Multiplayer;
 using DChess.UI;
 using DChess.Util;
 using System;
@@ -22,6 +23,8 @@ namespace DChess.Chess {
 		private bool _isWhitesTurn = true;
 
 		public List<Variant> Variants { get; set; }
+
+		public ChessClient ChessClient { get; set; }
 
 		public Board(Vector2Int size) {
 			_squares = new Square[size.x, size.y];
@@ -64,19 +67,30 @@ namespace DChess.Chess {
 			}
 		}
 
-		private void makeMove(Square from, Square to) {
-			;
-			if (legalMovesWithSelected != null) {
-				if (!legalMovesWithSelected.Contains(to.position)) {
-					return;
-				}
+		private void makeMove(Square from, Square to, bool networkMove = true) {
+			if(from.piece == null) {
+				return;
 			}
-			PlacePiece(to.position, _selectedSquare.piece);
+			List<Vector2Int> legalMoves = from.piece.GetAllLegalMoves(from);
+			if (!legalMoves.Contains(to.position)) {
+				Debug.WriteLine("Illegal move!");
+				return;
+			}
+			PlacePiece(to.position, from.piece);
 			if (hasTeamWon() != null) {
 				Debug.WriteLine($"Team {hasTeamWon()} has won!");
 			}
-			RemovePiece(_selectedSquare.position);
+			RemovePiece(from.position);
 			_isWhitesTurn = !_isWhitesTurn;
+			if (networkMove) {
+				ChessClient?.SendMove(new Move(this, from.position, to.position));
+			}
+		}
+
+		public void MakeMove(Move move, bool networkMove = true) {
+			Square to = GetSquare(move.origin);
+			Square from = GetSquare(move.destination);
+			makeMove(to, from, networkMove);
 		}
 
 		private TeamType getTurnTeamType() {
@@ -149,11 +163,11 @@ namespace DChess.Chess {
 					PlacePiece(new Vector2Int(i, 0), new PieceKnight(TeamType.White, this));
 					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceKnight(TeamType.Black, this));
 				}
-				else if (i == 3) {
+				if (i == 3) {
 					PlacePiece(new Vector2Int(i, 0), new PieceQueen(TeamType.White, this));
 					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceQueen(TeamType.Black, this));
 				}
-				else if (i == Size.x - 4) {
+				if (i == Size.x - 4) {
 					PlacePiece(new Vector2Int(i, 0), new PieceKing(TeamType.White, this));
 					PlacePiece(new Vector2Int(i, Size.x - 1), new PieceKing(TeamType.Black, this));
 				}

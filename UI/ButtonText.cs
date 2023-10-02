@@ -12,6 +12,7 @@ namespace DChess.UI {
 	public class ButtonText : Button, IDrawable {
 
 		private string _text;
+		private Vector2Int _offset;
 		private Vector2Int _size;
 		private WindowAlignment _alignment;
 		private Color _textColor;
@@ -19,23 +20,25 @@ namespace DChess.UI {
 
 		private readonly GameScaling _gameScaling;
 
-		public ButtonText(string text, WindowAlignment alignment, Vector2Int size, Color textColor, Color backGroundColor) : base() {
+		public ButtonText(string text, WindowAlignment alignment, Vector2Int offset, Vector2Int size, Color textColor, Color backGroundColor) : base() {
 			_text = text;
 			_alignment = alignment;
 			_size = size;
 			_textColor = textColor;
 			_backGroundColor = backGroundColor;
+			_offset = offset;
 
 			_gameScaling = GameScaling.Instance;
 		}
 
-		public ButtonText(string text, WindowAlignment alignment, Vector2Int size) : this(text, alignment, size, Color.Black, Color.Transparent) { }
+		public ButtonText(string text, WindowAlignment alignment, Vector2Int size) : this(text, alignment, Vector2Int.ZERO, size, Color.Black, Color.Transparent) { }
 
 		protected override Rectangle GetButtonRectangle() {
 			Vector2Int pos = new(_gameScaling.GetWindowPositionFromAlignment(_alignment, _size));
 			float scale = _gameScaling.Scale;
 
-			return new Rectangle(pos.x, pos.y, (int)(_size.x * scale), (int)(_size.y * scale));
+			return new Rectangle(pos.x + (int)(_offset.x * scale), pos.y + (int)(_offset.y * scale), 
+				(int)(_size.x * scale), (int)(_size.y * scale));
 		}
 
 
