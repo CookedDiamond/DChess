@@ -12,9 +12,10 @@ Console.Read();
 
 var board = new Board(new Vector2Int(6, 6));
 board.Build8x8StandardBoard();
-board.Variants.Add(new VariantFriendlyFire());
+board.Variants.Add(new VariantPawnQueenPromotion());
+// board.MakeComputerMove();
 
 var game = new Game1(board);
-game.SwitchScene(SceneType.Menu);
+game.SwitchScene(SceneType.Board);
 game.Run();
 

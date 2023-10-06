@@ -1,4 +1,5 @@
-﻿using DChess.Chess.Pieces;
+﻿using DChess.Chess.ChessAI;
+using DChess.Chess.Pieces;
 using DChess.Chess.Variants;
 using DChess.Multiplayer;
 using DChess.UI;
@@ -15,15 +16,14 @@ namespace DChess.Chess {
 	public class Board {
 		private Square[,] _squares;
 		public Vector2Int Size { get; set; }
+		public bool IsWhitesTurn = true;
+		public List<Variant> Variants { get; set; }
 
-		// Button interacton
+		// UI interacton
 		private Square _selectedSquare = null;
 		public List<Vector2Int> legalMovesWithSelected { get; private set; }
 
-		private bool _isWhitesTurn = true;
-
-		public List<Variant> Variants { get; set; }
-
+		// Networking
 		public ChessClient ChessClient { get; set; }
 
 		public Board(Vector2Int size) {
@@ -54,10 +54,10 @@ namespace DChess.Chess {
 
 		public void SelectSquare(Square square) {
 			if (_selectedSquare == null
-				&& square.piece != null
-				&& square.piece.team == getTurnTeamType()
-				&& square.piece.GetAllLegalMoves(square).Count > 0) {
-				legalMovesWithSelected = square.piece.GetAllLegalMoves(square);
+				&& square.Piece != null
+				&& square.Piece.Team == GetTurnTeamType()
+				&& square.Piece.GetAllLegalMoves(square).Count > 0) {
+				legalMovesWithSelected = ChessUtil.CreateDestinationsListFromMoveList(square.Piece.GetAllLegalMoves(square));
 				_selectedSquare = square;
 			}
 			else if (_selectedSquare != null) {
@@ -68,33 +68,48 @@ namespace DChess.Chess {
 		}
 
 		private void makeMove(Square from, Square to, bool networkMove = true) {
-			if(from.piece == null) {
-				return;
-			}
-			List<Vector2Int> legalMoves = from.piece.GetAllLegalMoves(from);
-			if (!legalMoves.Contains(to.position)) {
-				Debug.WriteLine("Illegal move!");
-				return;
-			}
-			PlacePiece(to.position, from.piece);
-			if (hasTeamWon() != null) {
-				Debug.WriteLine($"Team {hasTeamWon()} has won!");
-			}
-			RemovePiece(from.position);
-			_isWhitesTurn = !_isWhitesTurn;
-			if (networkMove) {
-				ChessClient?.SendMove(new Move(this, from.position, to.position));
-			}
+			MakeMove(new Move(from.Position, to.Position), networkMove);
 		}
 
 		public void MakeMove(Move move, bool networkMove = true) {
-			Square to = GetSquare(move.origin);
-			Square from = GetSquare(move.destination);
-			makeMove(to, from, networkMove);
+			Square from = GetSquare(move.origin);
+
+			if (from.Piece == null) {
+				Debug.WriteLine("Illegal move!");
+				return;
+			}
+			List<Move> legalMoves = from.Piece.GetAllLegalMoves(from);
+			if (!legalMoves.Contains(move)) {
+				Debug.WriteLine("Illegal move!");
+				return;
+			}
+			PlacePiece(move.destination, from.Piece);
+			RemovePiece(move.origin);
+			IsWhitesTurn = !IsWhitesTurn;
+			afterTurnUpdate();
+
+			Debug.WriteLine($"Eval: {GetEvaluaton().GetEvaluation()}");
+
+			if (networkMove) {
+				ChessClient?.SendMove(move);
+			}
 		}
 
-		private TeamType getTurnTeamType() {
-			return _isWhitesTurn ? TeamType.White : TeamType.Black;
+		// No sideways support.
+		private void afterTurnUpdate() {
+			foreach (var variant in Variants) {
+				variant.AfterTurnUpdate(this);
+			}
+		}
+
+		public void MakeComputerMove() {
+			var algo = new MinMaxAlgorithm(this);
+			var move = algo.GetBestMove(GetTurnTeamType());
+			MakeMove(move);
+		}
+
+		public TeamType GetTurnTeamType() {
+			return IsWhitesTurn ? TeamType.White : TeamType.Black;
 		}
 
 		public Square GetSquare(Vector2Int position) {
@@ -106,6 +121,29 @@ namespace DChess.Chess {
 
 		public Square[,] GetSquares() {
 			return _squares;
+		}
+
+		public List<Square> GetAllSquaresWithTeamPieces(TeamType team) {
+			List<Square> result = new ();
+			foreach (Square square in _squares) {
+				if (square.Piece != null && square.Piece.Team == team) {
+					result.Add(square);
+				}
+			}
+			return result;
+		}
+
+		public List<Move> GetAllLegalMovesForTeam(TeamType team) {
+			List<Square> teamPieces = GetAllSquaresWithTeamPieces(team);
+			List<Move> result = new ();	
+			foreach (var square in teamPieces) {
+				result.AddRange(square.Piece.GetAllLegalMoves(square));
+			}
+			return result;
+		}
+
+		public Evaluation GetEvaluaton() {
+			return new StandartEvaluation(this);
 		}
 
 		public bool IsInBounds(Vector2Int vector) {
@@ -122,26 +160,26 @@ namespace DChess.Chess {
 			return false;
 		}
 
-		private List<Vector2Int> getPiecesFromType(PieceType pieceType, TeamType teamType) {
-			List<Vector2Int> result = new();
+		public List<Square> GetPieceSquares(PieceType pieceType, TeamType teamType) {
+			List<Square> result = new();
 			foreach (var square in _squares) {
-				if (square.piece != null
-					&& square.piece.type == pieceType
-					&& square.piece.team == teamType) {
-					result.Add(square.position);
+				if (square.Piece != null
+					&& square.Piece.Type == pieceType
+					&& square.Piece.Team == teamType) {
+					result.Add(square);
 				}
 			}
 			return result;
 		}
 
 		private TeamType? hasTeamWon() {
-			var blackKingList = getPiecesFromType(PieceType.King, TeamType.Black);
-			var whiteKingList = getPiecesFromType(PieceType.King, TeamType.White);
+			var blackKingList = GetPieceSquares(PieceType.King, TeamType.Black);
+			var whiteKingList = GetPieceSquares(PieceType.King, TeamType.White);
 
 			if (blackKingList.Count == 0) {
 				return TeamType.White;
 			}
-			if (blackKingList.Count == 0) {
+			if (whiteKingList.Count == 0) {
 				return TeamType.Black;
 			}
 			return null;

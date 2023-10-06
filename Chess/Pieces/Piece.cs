@@ -8,52 +8,52 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.Pieces {
 	public class Piece {
-		public PieceType type { get; set; }
+		public PieceType Type { get; set; }
 
-		public TeamType team { get; set; }
+		public TeamType Team { get; set; }
 
 		protected readonly Board _board;
 
 		public Piece(PieceType type, TeamType team, Board board) {
-			this.type = type;
-			this.team = team;
+			Type = type;
+			Team = team;
 			_board = board;
 		}
 
-		public virtual List<Vector2Int> GetAllLegalMoves(Square fromSquare) {
-			List<Vector2Int> moves = new() {
+		public virtual List<Move> GetAllLegalMoves(Square fromSquare) {
+			List<Move> moves = new() {
 			};
 
 			return moves;
 		}
 
-		public List<Vector2Int> getMovesInDirection(Square fromSquare, Board board, Vector2Int direction) {
-			List<Vector2Int> moves = new();
+		protected List<Move> getMovesInDirection(Square fromSquare, Vector2Int direction) {
+			List<Vector2Int> destinations = new();
 
-			Vector2Int move = fromSquare.position + direction;
-			while (board.IsInBounds(move)) {
-				MoveType result = getMoveType(fromSquare.piece, move);
+			Vector2Int destination = fromSquare.Position + direction;
+			while (_board.IsInBounds(destination)) {
+				MoveType result = getMoveType(fromSquare.Piece, destination);
 				if (result == MoveType.Enemy) {
-					moves.Add(move);
+					destinations.Add(destination);
 					break;
 				}
 				if (result == MoveType.Empty) {
-					moves.Add(move);
-					move += direction;
+					destinations.Add(destination);
+					destination += direction;
 				}
 				else {
 					break;
 				}
 			}
 
-			return moves;
+			return ChessUtil.CreateMoveListFromVectorList(destinations, fromSquare.Position, _board);
 		}
 
 		protected MoveType getMoveType(Piece piece, Vector2Int destination) {
 			if (_board.IsInBounds(destination)) {
 				Square square = _board.GetSquare(destination);
 				if (square.HasPiece()) {
-					if (square.IsPieceEnemyTeam(piece.team)) {
+					if (square.IsPieceEnemyTeam(piece.Team)) {
 						return MoveType.Enemy;
 					}
 					return MoveType.TeamMate;
@@ -66,19 +66,19 @@ namespace DChess.Chess.Pieces {
 		}
 
 		public Texture2D GetPieceTexture() {
-			return type switch {
-				PieceType.Pawn => TextureLoader.PawnTexture[(int)team],
-				PieceType.Bishop => TextureLoader.BishopTexture[(int)team],
-				PieceType.Knight => TextureLoader.KnightTexture[(int)team],
-				PieceType.Rook => TextureLoader.RookTexture[(int)team],
-				PieceType.Queen => TextureLoader.QueenTexture[(int)team],
-				PieceType.King => TextureLoader.KingTexture[(int)team],
+			return Type switch {
+				PieceType.Pawn => TextureLoader.PawnTexture[(int)Team],
+				PieceType.Bishop => TextureLoader.BishopTexture[(int)Team],
+				PieceType.Knight => TextureLoader.KnightTexture[(int)Team],
+				PieceType.Rook => TextureLoader.RookTexture[(int)Team],
+				PieceType.Queen => TextureLoader.QueenTexture[(int)Team],
+				PieceType.King => TextureLoader.KingTexture[(int)Team],
 				_ => throw new NotImplementedException()
 			};
 		}
 
 		private char typeAsChar() {
-			return type switch {
+			return Type switch {
 				PieceType.Pawn => 'p',
 				PieceType.Bishop => 'b',
 				PieceType.Knight => 'n',
@@ -90,7 +90,7 @@ namespace DChess.Chess.Pieces {
 		}
 
 		private string teamAsString() {
-			return team switch {
+			return Team switch {
 				TeamType.Black => "black",
 				TeamType.White => "white",
 				_ => throw new NotImplementedException()
@@ -99,6 +99,20 @@ namespace DChess.Chess.Pieces {
 
 		public override string ToString() {
 			return $"type: {typeAsChar()} team: {teamAsString()}";
+		}
+
+
+
+		public static Piece GetPieceFromType(PieceType type, TeamType team, Board board) {
+			return type switch { 
+				PieceType.Pawn => new PiecePawn(team, board),
+				PieceType.Bishop => new PieceBishop(team, board),
+				PieceType.Knight => new PieceKnight(team, board),
+				PieceType.Rook => new PieceRook(team, board),
+				PieceType.Queen => new PieceQueen(team, board),
+				PieceType.King => new PieceKing(team, board),
+				_ => throw new NotImplementedException()	
+			};
 		}
 	}
 

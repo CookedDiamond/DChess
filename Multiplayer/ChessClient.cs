@@ -40,9 +40,9 @@ namespace DChess.Multiplayer {
 				var data = new byte[256];
 				NetworkStream stream = client.GetStream();
 				stream.Read(data, 0, data.Length);
-				Move resultMove = ByteConverter.ToMove(data, board);
+				Move resultMove = ByteConverter.ToMove(data);
 				Debug.WriteLine($"Received: {resultMove}");
-				resultMove.ApplyMove(false);
+				board.MakeMove(resultMove, false);
 			}
 		}
 

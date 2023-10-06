@@ -8,13 +8,10 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess {
 	public class Move {
-
-		private Board _board;
 		public Vector2Int origin {get; private set;}
 		public Vector2Int destination { get; private set; }
 
-		public Move(Board board, Vector2Int origin, Vector2Int destination) {
-			_board = board;
+		public Move(Vector2Int origin, Vector2Int destination) {
 			this.origin = origin;
 			this.destination = destination;
 		}
@@ -23,8 +20,15 @@ namespace DChess.Chess {
 			return $"Move: from {origin}, to {destination}";
 		}
 
-		public void ApplyMove(bool networkMove = true) {
-			_board.MakeMove(this, networkMove);
+		public override bool Equals(object obj) {
+			if (obj is not Move) return false;
+			Move other = (Move)obj;
+			return other.destination == destination && other.origin == origin;
+		}
+
+		// Probably some bullshit lol idk.
+		public override int GetHashCode() {
+			return HashCode.Combine(origin, destination);
 		}
 	}
 }

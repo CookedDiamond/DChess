@@ -10,25 +10,25 @@ namespace DChess.Chess.Pieces {
 		public PiecePawn(TeamType team, Board board) : base(PieceType.Pawn, team, board) {
 		}
 
-		public override List<Vector2Int> GetAllLegalMoves(Square fromSquare) {
-			List<Vector2Int> moves = getPawnMoves(fromSquare);
-			List<Vector2Int> baseMoves = base.GetAllLegalMoves(fromSquare);
+		public override List<Move> GetAllLegalMoves(Square fromSquare) {
+			List<Move> moves = getPawnMoves(fromSquare);
+			List<Move> baseMoves = base.GetAllLegalMoves(fromSquare);
 
-			return MoveHelper.CombineMoves(moves, baseMoves);
+			return ChessUtil.CombineLists(moves, baseMoves);
 		}
 
-		private List<Vector2Int> getPawnMoves(Square fromSquare) {
+		private List<Move> getPawnMoves(Square fromSquare) {
 			List<Vector2Int> moves = new();
 			// Move straight.
-			Vector2Int forward = fromSquare.position + Board.GetTeamDirection(team);
-			Vector2Int twoForward = forward + Board.GetTeamDirection(team);
+			Vector2Int forward = fromSquare.Position + Board.GetTeamDirection(Team);
+			Vector2Int twoForward = forward + Board.GetTeamDirection(Team);
 			Square forwardSquare = _board.GetSquare(forward);
 			Square twoForwardSquare = _board.GetSquare(twoForward);
 			if (forwardSquare != null && !forwardSquare.HasPiece()) {
 				moves.Add(forward);
 			}
 			if (twoForwardSquare != null
-				&& _board.IsStartingPawnRow(team, fromSquare.position.y)
+				&& _board.IsStartingPawnRow(Team, fromSquare.Position.y)
 				&& !twoForwardSquare.HasPiece()) {
 				moves.Add(twoForward);
 			}
@@ -40,15 +40,15 @@ namespace DChess.Chess.Pieces {
 			Square rightCaptureSquare = _board.GetSquare(rightCapture);
 
 			if (leftCaptureSquare != null
-				&& leftCaptureSquare.IsPieceEnemyTeam(team)) {
+				&& leftCaptureSquare.IsPieceEnemyTeam(Team)) {
 				moves.Add(leftCapture);
 			}
 			if (rightCaptureSquare != null
-				&& rightCaptureSquare.IsPieceEnemyTeam(team)) {
+				&& rightCaptureSquare.IsPieceEnemyTeam(Team)) {
 				moves.Add(rightCapture);
 			}
 
-			return moves;
+			return ChessUtil.CreateMoveListFromVectorList(moves, fromSquare.Position, _board);
 		}
 	}
 }

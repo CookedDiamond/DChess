@@ -10,17 +10,17 @@ namespace DChess.Chess.Pieces {
 		public PieceBishop(TeamType team, Board board) : base(PieceType.Bishop, team, board) {
 		}
 
-		public override List<Vector2Int> GetAllLegalMoves(Square fromSquare) {
-			return MoveHelper.CombineMoves(getBishopMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
+		public override List<Move> GetAllLegalMoves(Square fromSquare) {
+			return ChessUtil.CombineLists(getBishopMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
 		}
 
-		private List<Vector2Int> getBishopMoves(Square fromSquare) {
-			List<Vector2Int> moves = new();
+		private List<Move> getBishopMoves(Square fromSquare) {
+			List<Move> moves = new();
 
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(1, 1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(1, -1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(-1, -1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(-1, 1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, 1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, -1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, -1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, 1)));
 
 			return moves;
 		}

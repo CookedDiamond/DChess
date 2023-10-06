@@ -38,11 +38,11 @@ namespace DChess.Multiplayer {
 			return result.ToArray();
 		}
 
-		public static Move ToMove(byte[] bytes, Board board) {
+		public static Move ToMove(byte[] bytes) {
 			var origin = ToVector2Int(bytes.Take(INT_LENGTH * 2).ToArray());
 			var destination = ToVector2Int(bytes.Skip(INT_LENGTH * 2).Take(INT_LENGTH * 2).ToArray());
 
-			return new Move(board, origin, destination);
+			return new Move(origin, destination);
 		}
 	}
 }

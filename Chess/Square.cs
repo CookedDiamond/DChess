@@ -7,44 +7,44 @@ namespace DChess.Chess
 {
     public class Square {
 		private readonly Board _board;
-		public Vector2Int position { get; set; }
-		public TeamType team { get; set; }
-		public Piece piece { get; private set; }
+		public Vector2Int Position { get; set; }
+		public TeamType TeamColor { get; set; }
+		public Piece Piece { get; private set; }
 
 		public Square(Board board, Vector2Int position, TeamType team) {
 			_board = board;
-			this.position = position;
-			this.team = team;
+			this.Position = position;
+			TeamColor = team;
 		}
 
 		public void SetPiece(Piece piece) {
-			this.piece = piece;
+			this.Piece = piece;
 		}
 
 		public bool RemovePiece() {
-			if (piece == null) {
+			if (Piece == null) {
 				return false;
 			}
-			piece = null;
+			Piece = null;
 			return true;
 		}
 
 		public bool IsPieceEnemyTeam(TeamType team) {
 			bool result;
-			if (piece == null || team == piece.team) {
+			if (Piece == null || team == Piece.Team) {
 				result = false;
 			}
 			else {
 				result = true;
 			}
 			foreach (var variant in _board.Variants) {
-				result = variant.IsPieceEnemyTeam(result, piece);
+				result = variant.IsPieceEnemyTeam(result, Piece);
 			}
 			return result;
 		}
 
 		public bool HasPiece() {
-			return piece != null;
+			return Piece != null;
 		}
 
 		public void OnClick() {
@@ -52,7 +52,7 @@ namespace DChess.Chess
 		}
 
 		public override string ToString() {
-			return $"square: {position} piece: {piece}";
+			return $"square: {Position} piece: {Piece}";
 		}
 	}
 }

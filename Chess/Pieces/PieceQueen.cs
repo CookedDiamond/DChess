@@ -10,26 +10,26 @@ namespace DChess.Chess.Pieces {
 		public PieceQueen(TeamType team, Board board) : base(PieceType.Queen, team, board) {
 		}
 
-		public override List<Vector2Int> GetAllLegalMoves(Square fromSquare) {
-			return MoveHelper.CombineMoves(getQueenMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
+		public override List<Move> GetAllLegalMoves(Square fromSquare) {
+			return ChessUtil.CombineLists(getQueenMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
 		}
 
-		private List<Vector2Int> getQueenMoves(Square fromSquare) {
-			List<Vector2Int> moves = new();
+		private List<Move> getQueenMoves(Square fromSquare) {
+			List<Move> moves = new();
 
 			// Bishop moves.
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(1, 1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(1, -1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(-1, -1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(-1, 1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, 1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, -1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, -1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, 1)));
 
 			// Rook moves.
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(1, 0)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(-1, 0)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(0, 1)));
-			moves.AddRange(getMovesInDirection(fromSquare, _board, new Vector2Int(0, -1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, 0)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, 0)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(0, 1)));
+			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(0, -1)));
 
-			return MoveHelper.CombineMoves(moves, base.GetAllLegalMoves(fromSquare));
+			return ChessUtil.CombineLists(moves, base.GetAllLegalMoves(fromSquare));
 		}
 
 	}

@@ -10,11 +10,11 @@ namespace DChess.Chess.Pieces {
 		public PieceKnight(TeamType team, Board board) : base(PieceType.Knight, team, board) {
 		}
 
-		public override List<Vector2Int> GetAllLegalMoves(Square fromSquare) {
-			return MoveHelper.CombineMoves(getKnightMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
+		public override List<Move> GetAllLegalMoves(Square fromSquare) {
+			return ChessUtil.CombineLists(getKnightMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
 		}
 
-		private List<Vector2Int> getKnightMoves(Square fromSquare) {
+		private List<Move> getKnightMoves(Square fromSquare) {
 			List<Vector2Int> moves = new();
 
 			for (int i = 0; i < 8; i++) {
@@ -30,15 +30,15 @@ namespace DChess.Chess.Pieces {
 					_ => throw new NotImplementedException()
 				};
 
-				Vector2Int currentMove = fromSquare.position + offset;
+				Vector2Int currentMove = fromSquare.Position + offset;
 
-				MoveType result = getMoveType(fromSquare.piece, currentMove);
+				MoveType result = getMoveType(fromSquare.Piece, currentMove);
 				if (result == MoveType.Empty || result == MoveType.Enemy) {
 					moves.Add(currentMove);
 				}
 			}
 
-			return moves;
+			return ChessUtil.CreateMoveListFromVectorList(moves, fromSquare.Position, _board);
 		}
 	}
 }

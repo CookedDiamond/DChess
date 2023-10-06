@@ -5,7 +5,6 @@
 (-): do later
 ---------------------------------------------------------------------------------------------------
 
-(- Promoting)
 ? En passant
 ? Castling
 - Ideas for chess variants, Board can be a specific game mode.
@@ -26,10 +25,11 @@
 	(- on click feedback)
 	- center text in button
 - remove networking from board
+- remove UI from board
 - inform about write in stream with different threads
 ? use async read and other async methods instead of while(true) with threads
 	- close the 'while true threads' with windows "x"
-
+- null piece so no more piece != null checks
 
 line count: 
 git ls-files | grep '\.cs' | xargs wc -l

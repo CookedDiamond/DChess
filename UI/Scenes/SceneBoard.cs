@@ -32,7 +32,7 @@ namespace DChess.UI.Scenes {
 
 		private void InitializeBoardButtons() {
 			foreach (var square in _board.GetSquares()) {
-				var button = new ButtonBoard(square.position);
+				var button = new ButtonBoard(square.Position);
 				button.OnClickEvent += () => square.OnClick();
 				buttonManager.AddButton(button);
 			}
@@ -49,9 +49,9 @@ namespace DChess.UI.Scenes {
 
 		private void drawBoard(SpriteBatch spriteBatch) {
 			foreach (var square in _board.GetSquares()) {
-				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.position);
+				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.Position);
 
-				Color color = (square.team == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
+				Color color = (square.TeamColor == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
 				spriteBatch.DrawSprite(TextureLoader.SquareTexture, windowPosition, color, 1);
 			}
 		}
@@ -70,11 +70,11 @@ namespace DChess.UI.Scenes {
 
 		private void drawPieces(SpriteBatch spriteBatch) {
 			foreach (var square in _board.GetSquares()) {
-				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.position);
+				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.Position);
 
-				var piece = square.piece;
+				var piece = square.Piece;
 				if (piece != null) {
-					spriteBatch.DrawSprite(square.piece.GetPieceTexture(), windowPosition, Color.White, _gameScaling.PieceFactor);
+					spriteBatch.DrawSprite(square.Piece.GetPieceTexture(), windowPosition, Color.White, _gameScaling.PieceFactor);
 				}
 			}
 		}
