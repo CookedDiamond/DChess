@@ -26,12 +26,14 @@ namespace DChess.Chess.Pieces {
 			Square twoForwardSquare = _board.GetSquare(twoForward);
 			if (forwardSquare != null && !forwardSquare.HasPiece()) {
 				moves.Add(forward);
-			}
-			if (twoForwardSquare != null
+
+				if (twoForwardSquare != null
 				&& _board.IsStartingPawnRow(Team, fromSquare.Position.y)
 				&& !twoForwardSquare.HasPiece()) {
-				moves.Add(twoForward);
+					moves.Add(twoForward);
+				}
 			}
+
 
 			// Capture sideways.
 			Vector2Int leftCapture = forward + Vector2Int.LEFT;

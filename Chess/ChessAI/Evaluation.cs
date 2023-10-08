@@ -33,7 +33,7 @@ namespace DChess.Chess.ChessAI {
 			foreach (var square in squaresWithTeamPieces) {
 				float pieceScore = getPieceScore(square);
 				result += pieceScore;
-				Debug.WriteLine($"Current result: {result} Current Piece: {square.Piece} Current Piece Score: {pieceScore}");
+				// Debug.WriteLine($"Current result: {result} Current Piece: {square.Piece} Current Piece Score: {pieceScore}");
 			}
 			return result;
 		}

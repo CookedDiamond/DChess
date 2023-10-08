@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DChess {
 	public class Game1 : Game {
@@ -16,10 +17,12 @@ namespace DChess {
 
 		// Mouse variables TODO: make Inputhandler Class
 		private bool _lastMouseStateWasPressed = false;
+		private const int keyInputDelay = 50;
+		private int lastKeyInput = 0;
 
 		private readonly Board _board;
 
-		public static SpriteFont Font {get; private set;}
+		public static SpriteFont Font { get; private set; }
 
 		private Scene _menuScene;
 		private Scene _boardScene;
@@ -64,6 +67,7 @@ namespace DChess {
 
 			_gameScaling.Update();
 
+			// Mouse Inputs.
 			var mouseState = Mouse.GetState();
 			var mousePos = new Vector2Int(mouseState.X, mouseState.Y);
 			_activeScene.MouseHover(mousePos);
@@ -76,6 +80,14 @@ namespace DChess {
 			}
 			else {
 				_lastMouseStateWasPressed = false;
+			}
+
+			// Key Inputs.
+			lastKeyInput++;
+			KeyboardState keyState = Keyboard.GetState();
+			if (keyState.IsKeyDown(Keys.A) && keyInputDelay <= lastKeyInput) {
+				_board.MakeComputerMove();
+				lastKeyInput = 0;
 			}
 
 			base.Update(gameTime);
