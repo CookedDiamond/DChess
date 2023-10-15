@@ -88,8 +88,6 @@ namespace DChess.Chess {
 			IsWhitesTurn = !IsWhitesTurn;
 			afterTurnUpdate();
 
-			Debug.WriteLine($"Eval: {GetEvaluaton().GetEvaluation()}");
-
 			if (networkMove) {
 				ChessClient?.SendMove(move);
 			}
@@ -103,8 +101,8 @@ namespace DChess.Chess {
 		}
 
 		public void MakeComputerMove() {
-			var algo = new MinMaxAlgorithm(this);
-			var move = algo.GetBestMove(GetTurnTeamType());
+			var algo = new MinMaxRecursive();
+			var move = algo.GetBestMove(this);
 			MakeMove(move);
 		}
 
@@ -142,8 +140,8 @@ namespace DChess.Chess {
 			return result;
 		}
 
-		public Evaluation GetEvaluaton() {
-			return new StandartEvaluation(this);
+		public float GetEvaluaton() {
+			return new StandartEvaluation(this).GetEvaluation();
 		}
 
 		public bool IsInBounds(Vector2Int vector) {
@@ -172,7 +170,7 @@ namespace DChess.Chess {
 			return result;
 		}
 
-		private TeamType? hasTeamWon() {
+		public TeamType? HasTeamWon() {
 			var blackKingList = GetPieceSquares(PieceType.King, TeamType.Black);
 			var whiteKingList = GetPieceSquares(PieceType.King, TeamType.White);
 
