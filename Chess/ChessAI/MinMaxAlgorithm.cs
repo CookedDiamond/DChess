@@ -87,7 +87,7 @@ namespace DChess.Chess.ChessAI {
 		private Move getBestMoveWithMinMax(TeamType team) {
 			// Fill last layer with eval
 			foreach (MinMaxNode node in _nodes[_depth]) {
-				node.Evaluation = node.Board.GetEvaluaton().GetEvaluation();
+				node.Evaluation = node.Board.GetEvaluaton();
 			}
 
 			// Fill layers below, to the first.
