@@ -15,7 +15,16 @@ namespace DChess.Chess.ChessAI {
 		public MinMaxNode(Move move, MinMaxNode previous, Board board) {
 			Move = move;
 			Previous = previous;
-			Board = board;	
+			Board = board;
+		}
+
+		public void CalculateEval() {
+			Evaluation = Board.GetEvaluaton().GetEvaluation();
+		}
+
+
+		public override string ToString() {
+			return $"Node: Eval:{Evaluation}, {Move}";
 		}
 	}
 }
