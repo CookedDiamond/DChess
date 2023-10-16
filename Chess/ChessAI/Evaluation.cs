@@ -17,7 +17,9 @@ namespace DChess.Chess.ChessAI {
 
 		// Positive -> white is ahead, negative -> black is ahead.
 		public float GetEvaluation() {
-			return getEvaluation(TeamType.White) - getEvaluation(TeamType.Black);
+			float evalDiff = getEvaluation(TeamType.White) - getEvaluation(TeamType.Black);
+			float randomOffset = ((float) new Random().NextDouble() - 0.5f) * 0.25f;
+			return evalDiff + randomOffset;
 		}
 
 		private float getEvaluation(TeamType team) {

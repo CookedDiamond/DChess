@@ -6,19 +6,22 @@ using System.Diagnostics;
 namespace DChess.Chess
 {
     public class Square {
+
+		public static readonly Square NULL_SQUARE = new NullSquare();
+
 		private readonly Board _board;
 		public Vector2Int Position { get; set; }
 		public TeamType TeamColor { get; set; }
-		public Piece Piece { get; private set; }
+		public Piece Piece { get; protected set; }
 
 		public Square(Board board, Vector2Int position, TeamType team) {
 			_board = board;
-			this.Position = position;
+			Position = position;
 			TeamColor = team;
 		}
 
 		public void SetPiece(Piece piece) {
-			this.Piece = piece;
+			Piece = piece;
 		}
 
 		public bool RemovePiece() {
@@ -29,7 +32,7 @@ namespace DChess.Chess
 			return true;
 		}
 
-		public bool IsPieceEnemyTeam(TeamType team) {
+		public virtual bool IsPieceEnemyTeam(TeamType team) {
 			bool result;
 			if (Piece == null || team == Piece.Team) {
 				result = false;
@@ -47,7 +50,7 @@ namespace DChess.Chess
 			return Piece != null;
 		}
 
-		public void OnClick() {
+		public virtual void OnClick() {
 			_board.SelectSquare(this);
 		}
 

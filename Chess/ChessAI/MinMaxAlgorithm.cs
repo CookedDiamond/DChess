@@ -7,6 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DChess.Chess.ChessAI {
+
+	/// <summary>
+	/// NOT WORKING!
+	/// </summary>
 	public class MinMaxAlgorithm {
 		private const int _depth = 4;
 		private readonly Board _startBoard;

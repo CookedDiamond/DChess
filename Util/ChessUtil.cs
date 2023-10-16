@@ -17,6 +17,11 @@ namespace DChess.Util {
 			return moves1;
 		}
 
+		public static T ChoseRandomElement<T>(List<T> list) {
+			int randomNumber = new Random().Next(list.Count);
+			return list[randomNumber];
+		}
+
 		public static List<Move> CreateMoveListFromVectorList(List<Vector2Int> destinations, Vector2Int startPos, Board board) {
 			List<Move> moves = new();
 
@@ -57,5 +62,6 @@ namespace DChess.Util {
 			Piece clonedPiece = Piece.GetPieceFromType(piece.Type, piece.Team, board);
 			toSet.SetPiece(clonedPiece);
 		}
+
 	}
 }

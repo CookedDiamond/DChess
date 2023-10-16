@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 namespace DChess.Chess.ChessAI {
 	public class MinMaxRecursive {
 
-		private long posAnalysed = 0;
-		private List<MoveEvalPair> nextMoves = new();
-		private const int maxDepth = 5;
+		private long _posAnalysed = 0;
+		private List<MoveEvalPair> _nextMoves = new();
+		private int _maxDepth = 4;
 
 		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite) {
-			posAnalysed++;
-			if (posAnalysed % 10000 == 0) {
-				Debug.WriteLine($"Positions analysed: {posAnalysed}.");
+			_posAnalysed++;
+			if (_posAnalysed % 25000 == 0) {
+				Debug.WriteLine($"Positions analysed: {_posAnalysed}.");
 			}
-			if (depth == 0 || board.HasTeamWon != null) {
+			if (depth == 0 || board.HasTeamWon() != null) {
 				return board.GetEvaluaton();
 			}
 
@@ -31,12 +31,13 @@ namespace DChess.Chess.ChessAI {
 					float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
 					maxEval = Math.Max(maxEval, eval);
 					alpha = Math.Max(alpha, eval);
-					if (beta <= alpha) {
-						break;
+
+					if (depth == _maxDepth) {
+						_nextMoves.Add(new MoveEvalPair(move, eval));
 					}
 
-					if (depth == maxDepth - 1) {
-						nextMoves.Add(new MoveEvalPair(move, eval));
+					if (beta <= alpha) {
+						break;
 					}
 				}
 				
@@ -50,8 +51,13 @@ namespace DChess.Chess.ChessAI {
 					Board clonedBoard = ChessUtil.CloneBoard(board);
 					clonedBoard.MakeMove(move);
 					float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
-					minEval = Math.Max(minEval, eval);
-					beta = Math.Max(beta, eval);
+					minEval = Math.Min(minEval, eval);
+					beta = Math.Min(beta, eval);
+
+					if (depth == _maxDepth) {
+						_nextMoves.Add(new MoveEvalPair(move, eval));
+					}
+
 					if (beta <= alpha) {
 						break;
 					}
@@ -61,10 +67,20 @@ namespace DChess.Chess.ChessAI {
 		}
 
 		public Move GetBestMove(Board board) {
-			var currPos = evalOfPos(board, maxDepth, float.MinValue, float.MaxValue, board.IsWhitesTurn);
-			MoveEvalPair best = nextMoves.MaxBy(t => t.Evaluation);
-
-			return best.Move;
+			if (board.GetTotalPieceCount() <= 4) _maxDepth += 1;
+			if (board.GetTotalPieceCount() <= 7) _maxDepth += 1;
+			bool isWhite = board.IsWhitesTurn;
+			var currPos = evalOfPos(board, _maxDepth, float.MinValue, float.MaxValue, isWhite);
+			Debug.WriteLine($"Current Eval: {currPos}");
+			if (isWhite) {
+				MoveEvalPair best = _nextMoves.MaxBy(t => t.Evaluation);
+				return best.Move;
+			}
+			else {
+				MoveEvalPair best = _nextMoves.MinBy(t => t.Evaluation);
+				return best.Move;
+			}
+			
 		}
 
 	}

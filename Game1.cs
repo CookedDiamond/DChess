@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace DChess {
@@ -17,7 +18,7 @@ namespace DChess {
 
 		// Mouse variables TODO: make Inputhandler Class
 		private bool _lastMouseStateWasPressed = false;
-		private const int keyInputDelay = 50;
+		private const int keyInputDelay = 30;
 		private int lastKeyInput = 0;
 
 		private readonly Board _board;
@@ -87,6 +88,10 @@ namespace DChess {
 			KeyboardState keyState = Keyboard.GetState();
 			if (keyState.IsKeyDown(Keys.A) && keyInputDelay <= lastKeyInput) {
 				_board.MakeComputerMove();
+				lastKeyInput = 0;
+			}
+			if (keyState.IsKeyDown(Keys.S) && keyInputDelay <= lastKeyInput) {
+				Debug.WriteLine($"Current Eval: {_board.GetEvaluaton()}");
 				lastKeyInput = 0;
 			}
 

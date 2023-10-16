@@ -4,6 +4,7 @@ using DChess.Chess.Variants;
 using DChess.Multiplayer;
 using DChess.UI;
 using DChess.Util;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
@@ -17,6 +18,7 @@ namespace DChess.Chess {
 		private Square[,] _squares;
 		public Vector2Int Size { get; set; }
 		public bool IsWhitesTurn = true;
+		public int TurnCount { get; private set; }
 		public List<Variant> Variants { get; set; }
 
 		// UI interacton
@@ -29,6 +31,7 @@ namespace DChess.Chess {
 		public Board(Vector2Int size) {
 			_squares = new Square[size.x, size.y];
 			Size = size;
+			TurnCount = 0;
 			legalMovesWithSelected = new List<Vector2Int>();
 			Variants = new List<Variant>();
 			Initialize();
@@ -50,6 +53,14 @@ namespace DChess.Chess {
 
 		public bool RemovePiece(Vector2Int position) {
 			return GetSquare(position).RemovePiece();
+		}
+
+		public void RemoveSquare(Vector2Int position) {
+			_squares[position.x, position.y] = Square.NULL_SQUARE;
+		}
+
+		public Vector2 GetCenter() {
+			return new Vector2(Size.x / 2f, Size.y / 2f);
 		}
 
 		public void SelectSquare(Square square) {
@@ -85,7 +96,7 @@ namespace DChess.Chess {
 			}
 			PlacePiece(move.destination, from.Piece);
 			RemovePiece(move.origin);
-			IsWhitesTurn = !IsWhitesTurn;
+
 			afterTurnUpdate();
       
 			if (networkMove) {
@@ -95,6 +106,9 @@ namespace DChess.Chess {
 
 		// No sideways support.
 		private void afterTurnUpdate() {
+			TurnCount++;
+			IsWhitesTurn = !IsWhitesTurn;
+
 			foreach (var variant in Variants) {
 				variant.AfterTurnUpdate(this);
 			}
@@ -112,7 +126,7 @@ namespace DChess.Chess {
 
 		public Square GetSquare(Vector2Int position) {
 			if (!IsInBounds(position)) {
-				return null;
+				return Square.NULL_SQUARE;
 			}
 			return _squares[position.x, position.y];
 		}
@@ -144,11 +158,24 @@ namespace DChess.Chess {
 			return new StandartEvaluation(this).GetEvaluation();
 		}
 
+		public int GetTotalPieceCount() {
+			int result = 0;
+			foreach (var square in _squares) {
+				if (square.Piece != null) {
+					result++;
+				}
+			}
+
+			return result;
+		}
+
 		public bool IsInBounds(Vector2Int vector) {
-			return vector.x >= 0
-				&& vector.y >= 0
-				&& vector.x < Size.x
-				&& vector.y < Size.y;
+			bool inBoundsLocation = vector.x >= 0
+									&& vector.y >= 0
+									&& vector.x < Size.x
+									&& vector.y < Size.y;
+			if (inBoundsLocation && _squares[vector.x, vector.y] == Square.NULL_SQUARE) return false;
+			return inBoundsLocation;
 		}
 		public bool IsStartingPawnRow(TeamType team, int row) {
 			if (team == TeamType.White && row == 1
@@ -301,6 +328,7 @@ namespace DChess.Chess {
 
 	public enum TeamType {
 		White,
-		Black
+		Black,
+		None
 	}
 }

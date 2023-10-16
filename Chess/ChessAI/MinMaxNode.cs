@@ -19,7 +19,7 @@ namespace DChess.Chess.ChessAI {
 		}
 
 		public void CalculateEval() {
-			Evaluation = Board.GetEvaluaton().GetEvaluation();
+			Evaluation = Board.GetEvaluaton();
 		}
 
 

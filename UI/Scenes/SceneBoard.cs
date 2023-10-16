@@ -49,9 +49,12 @@ namespace DChess.UI.Scenes {
 
 		private void drawBoard(SpriteBatch spriteBatch) {
 			foreach (var square in _board.GetSquares()) {
+				if (square == Square.NULL_SQUARE) continue;
+
 				Vector2 windowPosition = _gameScaling.GetWindowPositionFromBoard(square.Position);
 
 				Color color = (square.TeamColor == TeamType.White) ? _lightSquaresColor : _darkSquaresColor;
+				
 				spriteBatch.DrawSprite(TextureLoader.SquareTexture, windowPosition, color, 1);
 			}
 		}
