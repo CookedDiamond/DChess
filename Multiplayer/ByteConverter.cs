@@ -1,4 +1,4 @@
-﻿using DChess.Chess;
+﻿using DChess.Chess.Playground;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
@@ -6,8 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Multiplayer {
-	public class ByteConverter {
+namespace DChess.Multiplayer
+{
+    public class ByteConverter {
 		public static readonly int INT_LENGTH = 4;
 
 		public static byte[] ToBytes(int i) {

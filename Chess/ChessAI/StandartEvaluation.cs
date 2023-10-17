@@ -1,12 +1,15 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Pieces;
+using DChess.Chess.Playground;
+using DChess.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess.ChessAI {
-	public class StandartEvaluation : Evaluation {
+namespace DChess.Chess.ChessAI
+{
+    public class StandartEvaluation : Evaluation {
 
 		private readonly float pawnScore = 1;
 		private readonly float minorScore = 3;
@@ -16,9 +19,9 @@ namespace DChess.Chess.ChessAI {
 		public StandartEvaluation(Board board) : base(board) {
 		}
 
-		protected override float getPieceScore(Square square) {
-			return square.Piece.Type switch {
-				Pieces.PieceType.Pawn => getPawnScore(square),
+		protected override float getPieceScore(Piece piece, Vector2Int position) {
+			return piece.Type switch {
+				Pieces.PieceType.Pawn => getPawnScore(position, piece.Team),
 				Pieces.PieceType.Knight => minorScore,
 				Pieces.PieceType.Bishop => minorScore,
 				Pieces.PieceType.Rook => rookScore,
@@ -28,10 +31,10 @@ namespace DChess.Chess.ChessAI {
 			};
 		}
 
-		private float getPawnScore(Square square) {
+		private float getPawnScore(Vector2Int position, TeamType team) {
 			float result = pawnScore;
-			var teamDir = Board.GetTeamDirection(square.Piece.Team);
-			int yPos = square.Position.y;
+			var teamDir = Board.GetTeamDirection(team);
+			int yPos = position.y;
 			int boardHeight = _board.Size.y - 1;
 			float progress = (float)yPos / boardHeight;
 			// Reverse progress for black.

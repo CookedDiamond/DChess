@@ -1,4 +1,4 @@
-﻿using DChess.Chess;
+﻿using DChess.Chess.Playground;
 using DChess.Multiplayer;
 using DChess.Server;
 using DChess.Util;
@@ -11,8 +11,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.UI.Scenes {
-	public class SceneMenu : Scene {
+namespace DChess.UI.Scenes
+{
+    public class SceneMenu : Scene {
 		private Game1 _game;
 		private Board _board;
 

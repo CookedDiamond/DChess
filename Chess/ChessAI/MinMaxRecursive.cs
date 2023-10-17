@@ -1,4 +1,5 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Playground;
+using DChess.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,8 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess.ChessAI {
-	public class MinMaxRecursive {
+namespace DChess.Chess.ChessAI
+{
+    public class MinMaxRecursive {
 
 		private long _posAnalysed = 0;
 		private List<MoveEvalPair> _nextMoves = new();

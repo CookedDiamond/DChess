@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DChess.Chess.Playground;
 
-namespace DChess.Chess.ChessAI {
-	public class MinMaxNode {
+namespace DChess.Chess.ChessAI
+{
+    public class MinMaxNode {
 
 		public Move Move { get; set; }
 		public Board Board { get; set; }

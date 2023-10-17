@@ -1,12 +1,13 @@
-﻿using DChess.Chess;
-using DChess.Chess.Pieces;
+﻿using DChess.Chess.Pieces;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
+using DChess.Chess.Playground;
 
-namespace DChess.Util {
-	public static class ChessUtil {
+namespace DChess.Util
+{
+    public static class ChessUtil {
 
 		public static List<T> CombineLists<T>(List<T> moves1, List<T> moves2) {
 			foreach (var move in moves2) {
@@ -43,10 +44,13 @@ namespace DChess.Util {
 
 			for (int x = 0; x < board.Size.x; x++) {
 				for (int y = 0; y < board.Size.y; y++) {
-					// DOES NOT CLONE THE VISUALS OF THE SQUARES!
-					var pos = new Vector2Int(x, y);
-					cloneSquare(returnBoard.GetSquare(pos), board.GetSquare(pos), returnBoard);
+					returnBoard.SquareMap[x, y] = board.SquareMap[x, y];
 				}
+			}
+
+			foreach (var pair in board.Pieces) {
+				var oldPiece = pair.Value;
+				returnBoard.PlacePiece(pair.Key, Piece.GetPieceFromType(oldPiece.Type, oldPiece.Team, returnBoard));
 			}
 
 			foreach (var variant in board.Variants) {
@@ -54,13 +58,6 @@ namespace DChess.Util {
 			}
 
 			return returnBoard;
-		}
-
-		private static void cloneSquare(Square toSet, Square toClone, Board board) {
-			if (toClone.Piece == null) return;
-			Piece piece = toClone.Piece;
-			Piece clonedPiece = Piece.GetPieceFromType(piece.Type, piece.Team, board);
-			toSet.SetPiece(clonedPiece);
 		}
 
 	}

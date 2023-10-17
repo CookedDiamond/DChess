@@ -1,20 +1,22 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Playground;
+using DChess.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess.Pieces {
-	internal class PieceKnight : Piece {
+namespace DChess.Chess.Pieces
+{
+    internal class PieceKnight : Piece {
 		public PieceKnight(TeamType team, Board board) : base(PieceType.Knight, team, board) {
 		}
 
-		public override List<Move> GetAllLegalMoves(Square fromSquare) {
-			return ChessUtil.CombineLists(getKnightMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
+		public override List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
+			return ChessUtil.CombineLists(getKnightMoves(fromPosition), base.GetAllLegalMoves(fromPosition));
 		}
 
-		private List<Move> getKnightMoves(Square fromSquare) {
+		private List<Move> getKnightMoves(Vector2Int fromPosition) {
 			List<Vector2Int> moves = new();
 
 			for (int i = 0; i < 8; i++) {
@@ -30,15 +32,15 @@ namespace DChess.Chess.Pieces {
 					_ => throw new NotImplementedException()
 				};
 
-				Vector2Int currentMove = fromSquare.Position + offset;
+				Vector2Int currentMove = fromPosition + offset;
 
-				MoveType result = getMoveType(fromSquare.Piece, currentMove);
+				MoveType result = getMoveType(currentMove);
 				if (result == MoveType.Empty || result == MoveType.Enemy) {
 					moves.Add(currentMove);
 				}
 			}
 
-			return ChessUtil.CreateMoveListFromVectorList(moves, fromSquare.Position, _board);
+			return ChessUtil.CreateMoveListFromVectorList(moves, fromPosition, _board);
 		}
 	}
 }

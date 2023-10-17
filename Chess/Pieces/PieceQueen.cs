@@ -1,35 +1,37 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Playground;
+using DChess.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess.Pieces {
-	public class PieceQueen : Piece {
+namespace DChess.Chess.Pieces
+{
+    public class PieceQueen : Piece {
 		public PieceQueen(TeamType team, Board board) : base(PieceType.Queen, team, board) {
 		}
 
-		public override List<Move> GetAllLegalMoves(Square fromSquare) {
-			return ChessUtil.CombineLists(getQueenMoves(fromSquare), base.GetAllLegalMoves(fromSquare));
+		public override List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
+			return ChessUtil.CombineLists(getQueenMoves(fromPosition), base.GetAllLegalMoves(fromPosition));
 		}
 
-		private List<Move> getQueenMoves(Square fromSquare) {
+		private List<Move> getQueenMoves(Vector2Int fromPosition) {
 			List<Move> moves = new();
 
 			// Bishop moves.
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, 1)));
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, -1)));
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, -1)));
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, 1)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(1, 1)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(1, -1)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(-1, -1)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(-1, 1)));
 
 			// Rook moves.
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(1, 0)));
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(-1, 0)));
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(0, 1)));
-			moves.AddRange(getMovesInDirection(fromSquare, new Vector2Int(0, -1)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(1, 0)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(-1, 0)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(0, 1)));
+			moves.AddRange(getMovesInDirection(fromPosition, new Vector2Int(0, -1)));
 
-			return ChessUtil.CombineLists(moves, base.GetAllLegalMoves(fromSquare));
+			return ChessUtil.CombineLists(moves, base.GetAllLegalMoves(fromPosition));
 		}
 
 	}

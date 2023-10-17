@@ -1,12 +1,9 @@
-﻿using DChess.Chess.Pieces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DChess.Chess.Playground;
+using DChess.Chess.Pieces;
 
-namespace DChess.Chess.Variants {
-	public abstract class Variant {
+namespace DChess.Chess.Variants
+{
+    public abstract class Variant {
 
 		public virtual bool IsPieceEnemyTeam(bool normalResult, Piece piece) {
 			return normalResult;

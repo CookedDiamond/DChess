@@ -1,4 +1,5 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Playground;
+using DChess.Util;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -6,8 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess.Pieces {
-	public class Piece {
+namespace DChess.Chess.Pieces
+{
+    public class Piece {
+
+		public static readonly Piece NULL_PIECE = new PieceNull();
+
 		public PieceType Type { get; set; }
 
 		public TeamType Team { get; set; }
@@ -20,19 +25,19 @@ namespace DChess.Chess.Pieces {
 			_board = board;
 		}
 
-		public virtual List<Move> GetAllLegalMoves(Square fromSquare) {
+		public virtual List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
 			List<Move> moves = new() {
 			};
 
 			return moves;
 		}
 
-		protected List<Move> getMovesInDirection(Square fromSquare, Vector2Int direction) {
+		protected List<Move> getMovesInDirection(Vector2Int fromPosition, Vector2Int direction) {
 			List<Vector2Int> destinations = new();
 
-			Vector2Int destination = fromSquare.Position + direction;
-			while (_board.IsInBounds(destination)) {
-				MoveType result = getMoveType(fromSquare.Piece, destination);
+			Vector2Int destination = fromPosition + direction;
+			while (_board.IsValidPosition(destination)) {
+				MoveType result = getMoveType(destination);
 				if (result == MoveType.Enemy) {
 					destinations.Add(destination);
 					break;
@@ -46,14 +51,28 @@ namespace DChess.Chess.Pieces {
 				}
 			}
 
-			return ChessUtil.CreateMoveListFromVectorList(destinations, fromSquare.Position, _board);
+			return ChessUtil.CreateMoveListFromVectorList(destinations, fromPosition, _board);
 		}
 
-		protected MoveType getMoveType(Piece piece, Vector2Int destination) {
-			if (_board.IsInBounds(destination)) {
-				Square square = _board.GetSquare(destination);
-				if (square.HasPiece()) {
-					if (square.IsPieceEnemyTeam(piece.Team)) {
+		public virtual bool IsEnemyTeam(TeamType team) {
+			bool result;
+			if (team == Team) {
+				result = false;
+			}
+			else {
+				result = true;
+			}
+			foreach (var variant in _board.Variants) {
+				result = variant.IsPieceEnemyTeam(result, this);
+			}
+			return result;
+		}
+
+		protected MoveType getMoveType(Vector2Int destination) {
+			if (_board.IsValidPosition(destination)) {
+				var piece = _board.GetPiece(destination);
+				if (piece != NULL_PIECE) {
+					if (IsEnemyTeam(piece.Team)) {
 						return MoveType.Enemy;
 					}
 					return MoveType.TeamMate;
@@ -65,43 +84,43 @@ namespace DChess.Chess.Pieces {
 			return MoveType.OutOfBounds;
 		}
 
-		public Texture2D GetPieceTexture() {
-			return Type switch {
-				PieceType.Pawn => TextureLoader.PawnTexture[(int)Team],
-				PieceType.Bishop => TextureLoader.BishopTexture[(int)Team],
-				PieceType.Knight => TextureLoader.KnightTexture[(int)Team],
-				PieceType.Rook => TextureLoader.RookTexture[(int)Team],
-				PieceType.Queen => TextureLoader.QueenTexture[(int)Team],
-				PieceType.King => TextureLoader.KingTexture[(int)Team],
+		public override string ToString() {
+			return $"type: {TypeAsChar(this)} team: {teamAsString(this)}";
+		}
+
+		public static Texture2D GetPieceTexture(Piece piece) {
+			return piece.Type switch {
+				PieceType.Pawn => TextureLoader.PawnTexture[(int)piece.Team],
+				PieceType.Bishop => TextureLoader.BishopTexture[(int)piece.Team],
+				PieceType.Knight => TextureLoader.KnightTexture[(int)piece.Team],
+				PieceType.Rook => TextureLoader.RookTexture[(int)piece.Team],
+				PieceType.Queen => TextureLoader.QueenTexture[(int)piece.Team],
+				PieceType.King => TextureLoader.KingTexture[(int)piece.Team],
 				_ => throw new NotImplementedException()
 			};
 		}
 
-		private char typeAsChar() {
-			return Type switch {
+		public static char TypeAsChar(Piece piece) {
+			return piece.Type switch {
 				PieceType.Pawn => 'p',
 				PieceType.Bishop => 'b',
 				PieceType.Knight => 'n',
 				PieceType.Rook => 'r',
 				PieceType.Queen => 'q',
 				PieceType.King => 'k',
+				PieceType.None => 'E',
 				_ => throw new NotImplementedException()
 			};
 		}
 
-		private string teamAsString() {
-			return Team switch {
+		private static string teamAsString(Piece piece) {
+			return piece.Team switch {
 				TeamType.Black => "black",
 				TeamType.White => "white",
+				TeamType.None => "none",
 				_ => throw new NotImplementedException()
 			};
 		}
-
-		public override string ToString() {
-			return $"type: {typeAsChar()} team: {teamAsString()}";
-		}
-
-
 
 		public static Piece GetPieceFromType(PieceType type, TeamType team, Board board) {
 			return type switch { 
@@ -111,6 +130,7 @@ namespace DChess.Chess.Pieces {
 				PieceType.Rook => new PieceRook(team, board),
 				PieceType.Queen => new PieceQueen(team, board),
 				PieceType.King => new PieceKing(team, board),
+				PieceType.None => NULL_PIECE,
 				_ => throw new NotImplementedException()	
 			};
 		}
@@ -122,7 +142,8 @@ namespace DChess.Chess.Pieces {
 		Knight,
 		Rook,
 		Queen,
-		King
+		King,
+		None
 	}
 
 	public enum MoveType {

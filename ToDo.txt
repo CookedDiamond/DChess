@@ -9,7 +9,7 @@
 ? Castling
 - Ideas for chess variants, Board can be a specific game mode.
 	- 6th rank pawn sack for deleting square from board.
-	- Battle royal -> chess board gets smaller (if no piece is in a row/ colum it gets deleted soon)
+	! Battle royal -> chess board gets smaller (if no piece is in a row/ colum it gets deleted soon)
 	- 2 kings
 	- connected lacer rooks
 	- round board
@@ -22,14 +22,14 @@
 - InputHandler
 (- Think about better gamescaling architecture)
 - Text Button 
-	(- on click feedback)
 	- center text in button
 - remove networking from board
-- remove UI from board
-- inform about write in stream with different threads
+- inform about write in network stream with different threads
 ? use async read and other async methods instead of while(true) with threads
 	- close the 'while true threads' with windows "x"
-- null piece so no more piece != null checks
+! null piece so no more piece != null checks
+- better eval function (should work with all field sizes)
+- some parts of eval into pieces
 
 line count: 
 git ls-files | grep '\.cs' | xargs wc -l

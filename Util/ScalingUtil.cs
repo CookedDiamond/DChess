@@ -1,4 +1,4 @@
-﻿using DChess.Chess;
+﻿using DChess.Chess.Playground;
 using Microsoft.Xna.Framework;
 using SharpDX.Direct2D1.Effects;
 using System;
@@ -9,8 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Util {
-	public class ScalingUtil {
+namespace DChess.Util
+{
+    public class ScalingUtil {
 		public static ScalingUtil Instance { get; private set; }
 
 		private readonly Board _board;

@@ -1,4 +1,5 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Playground;
+using DChess.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,12 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DChess.Chess.ChessAI {
+namespace DChess.Chess.ChessAI
+{
 
-	/// <summary>
-	/// NOT WORKING!
-	/// </summary>
-	public class MinMaxAlgorithm {
+    /// <summary>
+    /// NOT WORKING!
+    /// </summary>
+    public class MinMaxAlgorithm {
 		private const int _depth = 4;
 		private readonly Board _startBoard;
 

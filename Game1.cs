@@ -1,4 +1,4 @@
-﻿using DChess.Chess;
+﻿using DChess.Chess.Playground;
 using DChess.UI;
 using DChess.UI.Scenes;
 using DChess.Util;
@@ -10,8 +10,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace DChess {
-	public class Game1 : Game {
+namespace DChess
+{
+    public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
 		private static ScalingUtil _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
@@ -21,7 +22,7 @@ namespace DChess {
 		private const int keyInputDelay = 30;
 		private int lastKeyInput = 0;
 
-		private readonly Board _board;
+		private readonly BoardManager _boardManager;
 
 		public static SpriteFont Font { get; private set; }
 
@@ -30,14 +31,14 @@ namespace DChess {
 		private Scene _activeScene;
 		public SceneType ActiveSceneType { get; private set; }
 
-		public Game1(Board board) {
-			_board = board;
+		public Game1(BoardManager boardManager) {
+			_boardManager = boardManager;
 
 			_graphics = new GraphicsDeviceManager(this);
-			_gameScaling = new ScalingUtil(_board, this, _graphics);
+			_gameScaling = new ScalingUtil(boardManager.Board, this, _graphics);
 
-			_boardScene = new SceneBoard(board);
-			_menuScene = new SceneMenu(this, board);
+			_boardScene = new SceneBoard(boardManager.BoardUI);
+			_menuScene = new SceneMenu(this, boardManager.Board);
 
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
@@ -87,11 +88,11 @@ namespace DChess {
 			lastKeyInput++;
 			KeyboardState keyState = Keyboard.GetState();
 			if (keyState.IsKeyDown(Keys.A) && keyInputDelay <= lastKeyInput) {
-				_board.MakeComputerMove();
+				_boardManager.Board.MakeComputerMove();
 				lastKeyInput = 0;
 			}
 			if (keyState.IsKeyDown(Keys.S) && keyInputDelay <= lastKeyInput) {
-				Debug.WriteLine($"Current Eval: {_board.GetEvaluaton()}");
+				Debug.WriteLine($"Current Eval: {_boardManager.Board.GetEvaluaton()}");
 				lastKeyInput = 0;
 			}
 

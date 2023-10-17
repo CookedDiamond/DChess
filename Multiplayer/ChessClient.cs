@@ -1,4 +1,4 @@
-﻿using DChess.Chess;
+﻿using DChess.Chess.Playground;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
@@ -9,8 +9,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DChess.Multiplayer {
-	public class ChessClient {
+namespace DChess.Multiplayer
+{
+    public class ChessClient {
 
 		private Board _board;
 		private TcpClient _tcpClient;
