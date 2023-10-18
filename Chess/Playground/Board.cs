@@ -22,15 +22,11 @@ namespace DChess.Chess.Playground {
 		public bool IsWhitesTurn => MoveHistory.Count % 2 == 0;
 		public List<Variant> Variants { get; set; }
 
-		// Networking
-		public ChessClient ChessClient { get; set; }
-
 		public Board(Vector2Int size) {
 			Size = size;
 			Variants = new List<Variant>();
 			SquareMap = new SquareType[size.x, size.y];
 		}
-
 
 		public void PlacePiece(Vector2Int position, Piece piece) {
 			Pieces[position] = piece;
@@ -49,26 +45,23 @@ namespace DChess.Chess.Playground {
 			return new Vector2(Size.x / 2f, Size.y / 2f);
 		}
 
-		public void MakeMove(Move move, bool networkMove = true) {
+		public bool MakeMove(Move move) {
 			Piece piece = GetPiece(move.origin);
 
 			if (piece == Piece.NULL_PIECE) {
 				Debug.WriteLine("Illegal move!");
-				return;
+				return false;
 			}
 			List<Move> legalMoves = piece.GetAllLegalMoves(move.origin);
 			if (!legalMoves.Contains(move)) {
 				Debug.WriteLine("Illegal move!");
-				return;
+				return false;
 			}
 			PlacePiece(move.destination, piece);
 			RemovePiece(move.origin);
 
 			afterTurnUpdate(move);
-
-			if (networkMove) {
-				ChessClient?.SendMove(move);
-			}
+			return true;
 		}
 
 		private void afterTurnUpdate(Move lastMove) {

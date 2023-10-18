@@ -11,6 +11,9 @@ namespace DChess.Server {
 
 		private static List<TcpClient> tcpClients = new List<TcpClient>();
 
+		public static readonly string IP_ADRESS = "127.0.0.1";
+		public static readonly int PORT = 13000;
+
 		public ChessServer() {
 			Thread t = new Thread(new ThreadStart(Main));
 			t.Start();
@@ -19,10 +22,8 @@ namespace DChess.Server {
 		public static void Main() {
 			TcpListener server = null;
 			try {
-				// Set the TcpListener on port 13000.
-				Int32 port = 13000;
-				IPAddress localAddr = IPAddress.Parse("192.168.2.117");
-				server = new TcpListener(localAddr, port);
+				IPAddress localAddr = IPAddress.Parse(IP_ADRESS);
+				server = new TcpListener(localAddr, PORT);
 				server.Start();
 
 

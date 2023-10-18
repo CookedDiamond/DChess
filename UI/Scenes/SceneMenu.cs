@@ -14,12 +14,14 @@ using System.Threading.Tasks;
 namespace DChess.UI.Scenes
 {
     public class SceneMenu : Scene {
-		private Game1 _game;
-		private Board _board;
+		private readonly Game1 _game;
+		private readonly Board _board;
+		private readonly BoardNetworking _boardNetworking;
 
-		public SceneMenu(Game1 game, Board Board) {
+		public SceneMenu(Game1 game, Board Board, BoardNetworking boardNetworking) {
 			_game = game;
 			_board = Board;
+			_boardNetworking = boardNetworking;
 
 			ButtonText serverButton = new("Start Server", WindowAlignment.Center, new Vector2Int(0, -40), new Vector2Int(100, 20), Color.Black, Color.White);
 			serverButton.Initialize(buttonManager, () => startServer());
@@ -41,13 +43,13 @@ namespace DChess.UI.Scenes
 		}
 
 		private void startServer() {
-			new ChessServer();
+			_ = new ChessServer();
 		}
 
 		private void startClient() {
 			_game.SwitchScene(SceneType.Board);
 			var client = new ChessClient(_board);
-			_board.ChessClient = client;
+			_boardNetworking.ChessClient = client;
 		}
 	}
 }

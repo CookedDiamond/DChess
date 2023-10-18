@@ -1,4 +1,5 @@
 ﻿using DChess.Chess.Playground;
+using DChess.Server;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
@@ -18,13 +19,13 @@ namespace DChess.Multiplayer
 
 		public ChessClient(Board board) {
 			_board = board;
-			Connect("192.168.2.117");
+			Connect(ChessServer.IP_ADRESS);
 		}
 
 		private void Connect(string server) {
 			try {
 
-				TcpClient client = new(server, 13000);
+				TcpClient client = new(server, ChessServer.PORT);
 				_tcpClient = client;
 
 				new Thread(() => ReadMoves(client, _board)).Start();
@@ -43,7 +44,7 @@ namespace DChess.Multiplayer
 				stream.Read(data, 0, data.Length);
 				Move resultMove = ByteConverter.ToMove(data);
 				Debug.WriteLine($"Received: {resultMove}");
-				board.MakeMove(resultMove, false);
+				board.MakeMove(resultMove);
 			}
 		}
 

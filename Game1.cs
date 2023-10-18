@@ -38,7 +38,7 @@ namespace DChess
 			_gameScaling = new ScalingUtil(boardManager.Board, this, _graphics);
 
 			_boardScene = new SceneBoard(boardManager.BoardUI, boardManager.Board);
-			_menuScene = new SceneMenu(this, boardManager.Board);
+			_menuScene = new SceneMenu(this, boardManager.Board, boardManager.BoardNetworking);
 
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;

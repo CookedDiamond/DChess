@@ -12,14 +12,18 @@ namespace DChess.Chess.Playground {
 
 		public readonly Board Board;
 		public readonly BoardUI BoardUI;
+		public readonly BoardNetworking BoardNetworking;
 
-		public BoardManager(Board board) {
+		public BoardManager(Board board, BoardNetworking boardNetworking) {
 			Board = board;
 			BoardUI = new BoardUI(board, this);
+			BoardNetworking = boardNetworking;	
 		}
 
 		public void MakeMove(Move move) {
-			Board.MakeMove(move);
+			if (Board.MakeMove(move)) {
+				BoardNetworking.MakeMove(move);
+			}
 		}
 
 		public void Build8x8StandardBoard() {
