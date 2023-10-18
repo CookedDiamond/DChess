@@ -14,12 +14,14 @@ namespace DChess.Chess.Playground {
 	public class BoardUI : UI.IDrawable {
 		// Color variables.
 		private readonly Color _midColor;
-		public static readonly Color LIGHT_SQUARES_COLOR = new(242 / 255f, 225 / 255f, 195 / 255f);
-		public static readonly Color DARK_SQUARES_COLOR = new(195 / 255f, 160 / 255f, 130 / 255f);
+		private static readonly Color LIGHT_SQUARES_COLOR = new(242 / 255f, 225 / 255f, 195 / 255f);
+		private static readonly Color DARK_SQUARES_COLOR = new(195 / 255f, 160 / 255f, 130 / 255f);
+		private static readonly Color MOVE_HIGHLIGHT = new(1, 1, 0, .1f);
 
 		private readonly Board _board;
 		private readonly BoardManager _boardManager;
 		private readonly SquareUI[,] _squaresUI;
+		private SquareUI[] _lastMoveHighlight = new SquareUI[2];
 
 		private SquareUI _selectedSquare = null;
 		private List<Vector2Int> _legalMovesWithSelected { get; set; }
@@ -38,9 +40,12 @@ namespace DChess.Chess.Playground {
 				for (int y = 0; y < _board.Size.y; y++) {
 					byte b = (byte)((byte)(x + 9 * y) % 2);
 					TeamType teamType = b == 1 ? TeamType.White : TeamType.Black;
-					_squaresUI[x, y] = new SquareUI(this, new Vector2Int(x, y), teamType);
+					Color color = teamType == TeamType.White ? LIGHT_SQUARES_COLOR : DARK_SQUARES_COLOR;
+					_squaresUI[x, y] = new SquareUI(this, new Vector2Int(x, y), color);
 				}
 			}
+			_lastMoveHighlight[0] = new SquareUI(this, Vector2Int.ZERO, MOVE_HIGHLIGHT);
+			_lastMoveHighlight[1] = new SquareUI(this, Vector2Int.ZERO, MOVE_HIGHLIGHT);
 		}
 
 		public SquareUI[,] GetSquaresUI() {
@@ -68,8 +73,11 @@ namespace DChess.Chess.Playground {
 
 		public void Draw(SpriteBatch spriteBatch) {
 			foreach (var squareUI in _squaresUI) {
+				if (squareUI == null 
+					|| _board.SquareMap[squareUI.Position.x, squareUI.Position.y] == SquareType.Disabled) continue;
 				squareUI.Draw(spriteBatch);
 			}
+			drawLastMoveHighlight(spriteBatch);
 			drawLegalMoves(spriteBatch);
 			drawPieces(spriteBatch);
 		}
@@ -96,6 +104,16 @@ namespace DChess.Chess.Playground {
 				if (piece != null) {
 					spriteBatch.DrawSprite(Piece.GetPieceTexture(piece), windowPosition, Color.White, scalingUtil.PieceFactor);
 				}
+			}
+		}
+
+		private void drawLastMoveHighlight(SpriteBatch spriteBatch) {
+			if (_board.MoveHistory.Count == 0) return;
+			Move lastMove = _board.MoveHistory.Last();
+			_lastMoveHighlight[0].Position = lastMove.origin;
+			_lastMoveHighlight[1].Position = lastMove.destination;
+			foreach (var squareUI in _lastMoveHighlight) {
+				squareUI.Draw(spriteBatch);
 			}
 		}
 	}

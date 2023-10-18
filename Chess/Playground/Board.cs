@@ -18,8 +18,8 @@ namespace DChess.Chess.Playground {
 		public readonly Dictionary<Vector2Int, Piece> Pieces = new();
 		public SquareType[,] SquareMap;
 		public Vector2Int Size { get; set; }
-		public bool IsWhitesTurn = true;
-		public int TurnCount { get; private set; }
+		public List<Move> MoveHistory = new();
+		public bool IsWhitesTurn => MoveHistory.Count % 2 == 0;
 		public List<Variant> Variants { get; set; }
 
 		// Networking
@@ -27,7 +27,6 @@ namespace DChess.Chess.Playground {
 
 		public Board(Vector2Int size) {
 			Size = size;
-			TurnCount = 0;
 			Variants = new List<Variant>();
 			SquareMap = new SquareType[size.x, size.y];
 		}
@@ -65,16 +64,15 @@ namespace DChess.Chess.Playground {
 			PlacePiece(move.destination, piece);
 			RemovePiece(move.origin);
 
-			afterTurnUpdate();
+			afterTurnUpdate(move);
 
 			if (networkMove) {
 				ChessClient?.SendMove(move);
 			}
 		}
 
-		private void afterTurnUpdate() {
-			TurnCount++;
-			IsWhitesTurn = !IsWhitesTurn;
+		private void afterTurnUpdate(Move lastMove) {
+			MoveHistory.Add(lastMove);
 
 			foreach (var variant in Variants) {
 				variant.AfterTurnUpdate(this);

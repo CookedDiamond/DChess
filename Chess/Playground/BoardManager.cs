@@ -20,7 +20,6 @@ namespace DChess.Chess.Playground {
 
 		public void MakeMove(Move move) {
 			Board.MakeMove(move);
-
 		}
 
 		public void Build8x8StandardBoard() {

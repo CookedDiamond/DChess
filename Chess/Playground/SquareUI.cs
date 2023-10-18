@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 namespace DChess.Chess.Playground {
 	public class SquareUI : UI.IDrawable {
 		private readonly BoardUI _boardUI;
-		public Vector2Int Position { get; private set; }
-		private TeamType _teamColor;
+		public Vector2Int Position { get; set; }
+		private Color _color;
 
-		public SquareUI(BoardUI boardUI, Vector2Int position, TeamType teamColor) {
+		public SquareUI(BoardUI boardUI, Vector2Int position, Color color) {
 			_boardUI = boardUI;
 			Position = position;
-			_teamColor = teamColor;
+			_color = color;
 		}
 
 		public virtual void OnClick() {
@@ -26,11 +26,8 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void Draw(SpriteBatch spriteBatch) {
-			if (_teamColor == TeamType.None) return;
 			Vector2 windowPosition = ScalingUtil.Instance.GetWindowPositionFromBoard(Position);
-
-			Color color = (_teamColor == TeamType.White) ? BoardUI.LIGHT_SQUARES_COLOR : BoardUI.DARK_SQUARES_COLOR;
-			spriteBatch.DrawSprite(TextureLoader.SquareTexture, windowPosition, color, 1);
+			spriteBatch.DrawSprite(TextureLoader.SquareTexture, windowPosition, _color, 1);
 		}
 	}
 }

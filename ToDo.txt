@@ -30,6 +30,7 @@
 ! null piece so no more piece != null checks
 - better eval function (should work with all field sizes)
 - some parts of eval into pieces
+- fix variants/ cloning of board
 
 line count: 
 git ls-files | grep '\.cs' | xargs wc -l
