@@ -9,28 +9,26 @@
 ? Castling
 - Ideas for chess variants, Board can be a specific game mode.
 	- 6th rank pawn sack for deleting square from board.
-	! Battle royal -> chess board gets smaller (if no piece is in a row/ colum it gets deleted soon)
-	- 2 kings
+	! 2 kings
 	- connected lacer rooks
 	- round board
 - Menu
-	- Start Game
-? Settings
+	? Settings
 - Settings in textfile (json)
 (- Overlay)
 (- Time controll)
 - InputHandler
-(- Think about better gamescaling architecture)
 - Text Button 
 	- center text in button
-- remove networking from board
+! remove networking from board
 - inform about write in network stream with different threads
 ? use async read and other async methods instead of while(true) with threads
 	- close the 'while true threads' with windows "x"
 ! null piece so no more piece != null checks
 - better eval function (should work with all field sizes)
 - some parts of eval into pieces
-- fix variants/ cloning of board
+! Change board less with battle royale so bots can see with depth 4
+? Implement visual queue for disapearing squares -> Mines etc.
 
 line count: 
 git ls-files | grep '\.cs' | xargs wc -l

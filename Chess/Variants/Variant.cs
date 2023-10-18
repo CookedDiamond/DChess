@@ -13,5 +13,8 @@ namespace DChess.Chess.Variants
 
 		}
 
+		public virtual Variant Clone() {
+			return this;
+		}
 	}
 }

@@ -21,7 +21,7 @@ namespace DChess.Chess.Variants
 			var offset = board.GetCenter();
 			float halfSize = Math.Max(offset.X, offset.Y);
 			float outsideCornerDistance = (float) Math.Sqrt(halfSize * halfSize * 2f);
-			if (board.TurnCount % _decreasingIntervall == 0 ) {
+			if (board.MoveHistory.Count % _decreasingIntervall == 0 ) {
 				decreaseCounter++;
 				for (int x = 0; x < board.Size.x; x++) {
 					for (int y = 0; y < board.Size.y; y++) {
@@ -33,6 +33,13 @@ namespace DChess.Chess.Variants
 					}
 				}
 			}
+		}
+
+		public override Variant Clone() {
+			var variant = new VariantBattleRoyale(_decreasingIntervall, _decreasingStrenth) {
+				decreaseCounter = decreaseCounter
+			};
+			return variant;
 		}
 	}
 }

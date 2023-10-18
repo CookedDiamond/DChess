@@ -13,9 +13,11 @@ namespace DChess.UI.Scenes
 {
     public class SceneBoard : Scene {
 		private readonly BoardUI _boardUI;
+		private readonly Board _board;
 		
-		public SceneBoard(BoardUI board) {
-			_boardUI = board;
+		public SceneBoard(BoardUI boardUI, Board board) {
+			_boardUI = boardUI;
+			_board = board;
 
 			BackGroundColor = Color.DarkSeaGreen;
 			InitializeBoardButtons();
@@ -31,7 +33,11 @@ namespace DChess.UI.Scenes
 
 		public override void Draw(SpriteBatch spriteBatch) {
 			_boardUI.Draw(spriteBatch);
-
+			spriteBatch.DrawBoundedText($"Moves: {_board.MoveHistory.Count}", 
+				new Vector2(0,0), 
+				Color.White, 
+				new Vector2Int(100, 100),
+				Game1.Font);
 			base.Draw(spriteBatch);
 		}
 	}

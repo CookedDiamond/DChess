@@ -38,9 +38,7 @@ namespace DChess.Util
 		}
 
 		public static Board CloneBoard(Board board) {
-			Board returnBoard = new(board.Size) {
-				IsWhitesTurn = board.IsWhitesTurn
-			};
+			Board returnBoard = new(board.Size);
 
 			for (int x = 0; x < board.Size.x; x++) {
 				for (int y = 0; y < board.Size.y; y++) {
@@ -53,8 +51,12 @@ namespace DChess.Util
 				returnBoard.PlacePiece(pair.Key, Piece.GetPieceFromType(oldPiece.Type, oldPiece.Team, returnBoard));
 			}
 
+			foreach (var move in board.MoveHistory) {
+				returnBoard.MoveHistory.Add(move);
+			}
+
 			foreach (var variant in board.Variants) {
-				returnBoard.Variants.Add(variant);
+				returnBoard.Variants.Add(variant.Clone());
 			}
 
 			return returnBoard;
