@@ -108,9 +108,9 @@ namespace DChess.Chess.Playground {
 		}
 
 		private void drawLastMoveHighlight(SpriteBatch spriteBatch) {
-			if (_board.MoveHistory.Count == 0) return;
-			Move lastMove = _board.MoveHistory.Last();
-			_lastMoveHighlight[0].Position = lastMove.origin;
+            if (_board.GetMoveCount() == 0) return;
+            Move lastMove = _board.GetLastMove();
+            _lastMoveHighlight[0].Position = lastMove.origin;
 			_lastMoveHighlight[1].Position = lastMove.destination;
 			foreach (var squareUI in _lastMoveHighlight) {
 				squareUI.Draw(spriteBatch);

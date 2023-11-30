@@ -14,7 +14,7 @@ namespace DChess.Chess.ChessAI
     /// NOT WORKING!
     /// </summary>
     public class MinMaxAlgorithm {
-		private const int _depth = 4;
+		private const int _depth = 5;
 		private readonly Board _startBoard;
 
 		// Current layer nodes.
@@ -42,7 +42,7 @@ namespace DChess.Chess.ChessAI
 		private void fillFirstLayer() {
 			List<Move> moves = _startBoard.GetAllLegalMovesForTeam(_startBoard.GetTurnTeamType());
 			foreach (Move move in moves) {
-				Board boardWithMove = ChessUtil.CloneBoard(_startBoard);
+				Board boardWithMove = _startBoard.CloneBoard();
 				boardWithMove.MakeMove(move);
 
 				MinMaxNode node = new(move, null, boardWithMove);
@@ -64,7 +64,7 @@ namespace DChess.Chess.ChessAI
 				}
 				List<Move> moves = node.Board.GetAllLegalMovesForTeam(node.Board.GetTurnTeamType());
 				foreach (Move move in moves) {
-					Board boardWithMove = ChessUtil.CloneBoard(node.Board);
+					Board boardWithMove = node.Board.CloneBoard();
 					boardWithMove.MakeMove(move);
 
 					var newNode = new MinMaxNode(move, node, boardWithMove);

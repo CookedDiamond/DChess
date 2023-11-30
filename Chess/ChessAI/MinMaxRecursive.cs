@@ -13,14 +13,14 @@ namespace DChess.Chess.ChessAI
 
 		private long _posAnalysed = 0;
 		private List<MoveEvalPair> _nextMoves = new();
-		private int _maxDepth = 4;
+		private int _maxDepth = 7;
 
 		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite) {
 			_posAnalysed++;
 			if (_posAnalysed % 25000 == 0) {
 				Debug.WriteLine($"Positions analysed: {_posAnalysed}.");
 			}
-			if (depth == 0 || board.HasTeamWon() != null) {
+			if (depth == 0 || board.HasTeamWon() != TeamType.None) {
 				return board.GetEvaluaton();
 			}
 
@@ -28,7 +28,7 @@ namespace DChess.Chess.ChessAI
 				float maxEval = float.MinValue;
 				List<Move> legalMoves = board.GetAllLegalMovesForTeam(TeamType.White);
 				foreach (Move move in legalMoves) {
-					Board clonedBoard = ChessUtil.CloneBoard(board);
+					Board clonedBoard = board.CloneBoard();
 					clonedBoard.MakeMove(move);
 					float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
 					maxEval = Math.Max(maxEval, eval);
@@ -50,7 +50,7 @@ namespace DChess.Chess.ChessAI
 				float minEval = float.MaxValue;
 				List<Move> legalMoves = board.GetAllLegalMovesForTeam(TeamType.Black);
 				foreach (Move move in legalMoves) {
-					Board clonedBoard = ChessUtil.CloneBoard(board);
+					Board clonedBoard = board.CloneBoard();
 					clonedBoard.MakeMove(move);
 					float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
 					minEval = Math.Min(minEval, eval);

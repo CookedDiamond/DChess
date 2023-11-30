@@ -36,31 +36,5 @@ namespace DChess.Util
 		public static List<Vector2Int> CreateDestinationsListFromMoveList(List<Move> moves) {
 			return moves.Select(move => move.destination).ToList();
 		}
-
-		public static Board CloneBoard(Board board) {
-			Board returnBoard = new(board.Size);
-
-			for (int x = 0; x < board.Size.x; x++) {
-				for (int y = 0; y < board.Size.y; y++) {
-					returnBoard.SquareMap[x, y] = board.SquareMap[x, y];
-				}
-			}
-
-			foreach (var pair in board.Pieces) {
-				var oldPiece = pair.Value;
-				returnBoard.PlacePiece(pair.Key, Piece.GetPieceFromType(oldPiece.Type, oldPiece.Team, returnBoard));
-			}
-
-			foreach (var move in board.MoveHistory) {
-				returnBoard.MoveHistory.Add(move);
-			}
-
-			foreach (var variant in board.Variants) {
-				returnBoard.Variants.Add(variant.Clone());
-			}
-
-			return returnBoard;
-		}
-
 	}
 }

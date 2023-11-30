@@ -33,7 +33,7 @@ namespace DChess.UI.Scenes
 
 		public override void Draw(SpriteBatch spriteBatch) {
 			_boardUI.Draw(spriteBatch);
-			spriteBatch.DrawBoundedText($"Moves: {_board.MoveHistory.Count}", 
+			spriteBatch.DrawBoundedText($"Moves: {_board.GetMoveCount()}", 
 				new Vector2(0,0), 
 				Color.White, 
 				new Vector2Int(100, 100),

@@ -21,7 +21,7 @@ namespace DChess.Chess.Variants
 			var offset = board.GetCenter();
 			float halfSize = Math.Max(offset.X, offset.Y);
 			float outsideCornerDistance = (float) Math.Sqrt(halfSize * halfSize * 2f);
-			if (board.MoveHistory.Count % _decreasingIntervall == 0 ) {
+			if (board.GetMoveCount() % _decreasingIntervall == 0 ) {
 				decreaseCounter++;
 				for (int x = 0; x < board.Size.x; x++) {
 					for (int y = 0; y < board.Size.y; y++) {

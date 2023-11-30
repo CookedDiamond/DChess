@@ -15,11 +15,15 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.Playground {
 	public class Board {
+		public static readonly TeamType START_TEAM = TeamType.White;
+		public static readonly TeamType SECOND_TEAM = TeamType.Black;
+
+		// TODO: Remove Dictionary -> performance
 		public readonly Dictionary<Vector2Int, Piece> Pieces = new();
 		public SquareType[,] SquareMap;
 		public Vector2Int Size { get; set; }
-		public List<Move> MoveHistory = new();
-		public bool IsWhitesTurn => MoveHistory.Count % 2 == 0;
+		private List<Move> _moveHistory = new();
+		public bool IsWhitesTurn => _moveHistory.Count % 2 == (START_TEAM == TeamType.White ? 0 : 1);
 		public List<Variant> Variants { get; set; }
 
 		public Board(Vector2Int size) {
@@ -65,7 +69,7 @@ namespace DChess.Chess.Playground {
 		}
 
 		private void afterTurnUpdate(Move lastMove) {
-			MoveHistory.Add(lastMove);
+			_moveHistory.Add(lastMove);
 
 			foreach (var variant in Variants) {
 				variant.AfterTurnUpdate(this);
@@ -73,13 +77,14 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void MakeComputerMove() {
+			if (HasTeamWon() != TeamType.None) return;
 			var algo = new MinMaxRecursive();
 			var move = algo.GetBestMove(this);
 			MakeMove(move);
 		}
 
 		public TeamType GetTurnTeamType() {
-			return IsWhitesTurn ? TeamType.White : TeamType.Black;
+			return IsWhitesTurn ? START_TEAM : SECOND_TEAM;
 		}
 
 		public Piece GetPiece(Vector2Int position) {
@@ -116,6 +121,25 @@ namespace DChess.Chess.Playground {
 			return result;
 		}
 
+		public List<KeyValuePair<Vector2Int, Piece>> GetPiecesFromTeamWithType(PieceType pieceType, TeamType teamType) {
+			List<KeyValuePair<Vector2Int, Piece>> result = new();
+			foreach (var pair in Pieces) {
+				if (pair.Value != Piece.NULL_PIECE
+					&& pair.Value.Type == pieceType
+					&& pair.Value.Team == teamType) {
+					result.Add(pair);
+				}
+			}
+			return result;
+		}
+
+		public int GetMoveCount() {
+			return _moveHistory.Count;
+		}
+
+		public Move GetLastMove() {
+			return _moveHistory.Last();
+		}
 		public float GetEvaluaton() {
 			return new StandartEvaluation(this).GetEvaluation();
 		}
@@ -140,19 +164,7 @@ namespace DChess.Chess.Playground {
 			return false;
 		}
 
-		public List<KeyValuePair<Vector2Int, Piece>> GetPiecesFromTeamWithType(PieceType pieceType, TeamType teamType) {
-			List<KeyValuePair<Vector2Int, Piece>> result = new();
-			foreach (var pair in Pieces) {
-				if (pair.Value != Piece.NULL_PIECE
-					&& pair.Value.Type == pieceType
-					&& pair.Value.Team == teamType) {
-					result.Add(pair);
-				}
-			}
-			return result;
-		}
-
-		public TeamType? HasTeamWon() {
+		public TeamType HasTeamWon() {
 			var blackKingList = GetPiecesFromTeamWithType(PieceType.King, TeamType.Black);
 			var whiteKingList = GetPiecesFromTeamWithType(PieceType.King, TeamType.White);
 
@@ -162,7 +174,32 @@ namespace DChess.Chess.Playground {
 			if (whiteKingList.Count == 0) {
 				return TeamType.Black;
 			}
-			return null;
+			return TeamType.None;
+		}
+
+		public Board CloneBoard() {
+			Board returnBoard = new(Size);
+
+			for (int x = 0; x < Size.x; x++) {
+				for (int y = 0; y < Size.y; y++) {
+					returnBoard.SquareMap[x, y] = SquareMap[x, y];
+				}
+			}
+
+			foreach (var pair in Pieces) {
+				var oldPiece = pair.Value;
+				returnBoard.PlacePiece(pair.Key, Piece.GetPieceFromType(oldPiece.Type, oldPiece.Team, returnBoard));
+			}
+
+			foreach (var move in _moveHistory) {
+				returnBoard._moveHistory.Add(move);
+			}
+
+			foreach (var variant in Variants) {
+				returnBoard.Variants.Add(variant.Clone());
+			}
+
+			return returnBoard;
 		}
 
 		public static Vector2Int GetTeamDirection(TeamType team) {

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DChess.Chess.Playground {
@@ -14,15 +15,28 @@ namespace DChess.Chess.Playground {
 		public readonly BoardUI BoardUI;
 		public readonly BoardNetworking BoardNetworking;
 
+		private TeamType _computerPlayer;
+
 		public BoardManager(Board board, BoardNetworking boardNetworking) {
 			Board = board;
 			BoardUI = new BoardUI(board, this);
 			BoardNetworking = boardNetworking;	
 		}
 
+		public void AddComputerPlayer(TeamType team) {
+			_computerPlayer = team;
+
+			if (team == Board.START_TEAM && Board.GetMoveCount() == 0) {
+				Board.MakeComputerMove();
+			}
+		}
+
 		public void MakeMove(Move move) {
 			if (Board.MakeMove(move)) {
 				BoardNetworking.MakeMove(move);
+			}
+			if (_computerPlayer == Board.GetTurnTeamType()) {
+				Board.MakeComputerMove();
 			}
 		}
 
