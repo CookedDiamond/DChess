@@ -58,7 +58,8 @@ namespace DChess.Util {
 		}
 
 		public override int GetHashCode() {
-			return new Vector2(x,y).GetHashCode();
+			int one = x << 16;
+			return one + y;
 		}
 	}
 }

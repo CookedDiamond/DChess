@@ -26,8 +26,13 @@ namespace DChess.Chess.Pieces
 		}
 
 		public virtual List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
-			List<Move> moves = new() {
-			};
+			List<Move> moves = new();
+			foreach (var variant in _board.Variants) {
+				var newMoves = variant.AdditionalMoves(_board, this, fromPosition);
+				if (newMoves != null) {
+					moves.AddRange(newMoves);
+				}
+			}
 
 			return moves;
 		}

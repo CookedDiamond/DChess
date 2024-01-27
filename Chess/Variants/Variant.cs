@@ -1,5 +1,7 @@
 ﻿using DChess.Chess.Playground;
 using DChess.Chess.Pieces;
+using System.Collections.Generic;
+using DChess.Util;
 
 namespace DChess.Chess.Variants
 {
@@ -11,6 +13,10 @@ namespace DChess.Chess.Variants
 
 		public virtual void AfterTurnUpdate(Board board) {
 
+		}
+
+		public virtual List<Move> AdditionalMoves(Board board, Piece piece, Vector2Int position) {
+			return null;
 		}
 
 		public virtual Variant Clone() {

@@ -22,13 +22,13 @@ namespace DChess.Chess.Playground {
 		public readonly Dictionary<Vector2Int, Piece> Pieces = new();
 		public SquareType[,] SquareMap;
 		public Vector2Int Size { get; set; }
-		private List<Move> _moveHistory = new();
 		public bool IsWhitesTurn => _moveHistory.Count % 2 == (START_TEAM == TeamType.White ? 0 : 1);
-		public List<Variant> Variants { get; set; }
+        public float LastEval = 0;
+        public List<Variant> Variants { get; set; }
 
-		private float lastEval = 0;
+        private readonly List<Move> _moveHistory = new();
 
-		public Board(Vector2Int size) {
+        public Board(Vector2Int size) {
 			Size = size;
 			Variants = new List<Variant>();
 			SquareMap = new SquareType[size.x, size.y];
@@ -52,23 +52,19 @@ namespace DChess.Chess.Playground {
 		}
 
 		public bool MakeMove(Move move) {
-			Piece piece = GetPiece(move.origin);
-
-			if (piece == Piece.NULL_PIECE) {
-				Debug.WriteLine("Illegal move!");
-				return false;
-			}
-			List<Move> legalMoves = piece.GetAllLegalMoves(move.origin);
-			if (!legalMoves.Contains(move)) {
-				Debug.WriteLine("Illegal move!");
-				return false;
-			}
-			PlacePiece(move.destination, piece);
-			RemovePiece(move.origin);
+			move.Apply(this);
 
 			afterTurnUpdate(move);
 			return true;
 		}
+
+		public void UndoLastMove()
+		{
+			var lastMove = GetLastMove();
+
+            lastMove.Undo(this);
+            _moveHistory.Remove(lastMove);
+        }
 
 		private void afterTurnUpdate(Move lastMove) {
 			_moveHistory.Add(lastMove);
@@ -80,8 +76,8 @@ namespace DChess.Chess.Playground {
 
 		public void MakeComputerMove() {
 			if (HasTeamWon() != TeamType.None) return;
-			var algo = new MinMaxRecursive(lastEval);
-			var move = algo.GetBestMove(this, out lastEval);
+			var algo = new MinMaxRecursive(LastEval);
+			var move = algo.GetBestMove(this, out LastEval);
 			MakeMove(move);
 		}
 

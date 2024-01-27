@@ -25,7 +25,7 @@ namespace DChess.Chess.ChessAI
 		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite) {
 			_posAnalysed++;
 			float boardEval = board.GetEvaluaton();
-			if (_posAnalysed % 25000 == 0) {
+			if (_posAnalysed % 50000 == 0) {
 				Debug.WriteLine($"Positions analysed: {_posAnalysed} and {_skipped} trees skipped.");
 			}
 			if (Math.Abs(lastEval) + lastEvalBoundry < Math.Abs(boardEval)) {
@@ -84,8 +84,13 @@ namespace DChess.Chess.ChessAI
 			if (board.GetTotalPieceCount() <= 7) _maxDepth += 1;
 			if (board.GetTotalPieceCount() <= 13) _maxDepth += 1;
 			bool isWhite = board.IsWhitesTurn;
+
+			var watch = new Stopwatch();
+			watch.Start();
 			lastEval = evalOfPos(board, _maxDepth, float.MinValue, float.MaxValue, isWhite);
-			Debug.WriteLine($"Current Eval: {lastEval}");
+			watch.Stop();
+			Debug.WriteLine($"Positions analysed: {_posAnalysed} and {_skipped} trees skipped.");
+			Debug.WriteLine($"Eval: {lastEval}, Time: {Math.Round(watch.Elapsed.TotalSeconds,2)}s, PpS: {Math.Round(_posAnalysed / watch.Elapsed.TotalSeconds)}");
 			if (isWhite) {
 				MoveEvalPair best = _nextMoves.MaxBy(t => t.Evaluation);
 				

@@ -1,40 +1,47 @@
-﻿using DChess.Util;
+﻿using DChess.Chess.Pieces;
+using DChess.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace DChess.Chess.Playground
 {
     public class Move
     {
-        public Vector2Int origin { get; private set; }
-        public Vector2Int destination { get; private set; }
+        public readonly List<BoardChange> Changes = new();
 
-        public Move(Vector2Int origin, Vector2Int destination)
+        public Move()
         {
-            this.origin = origin;
-            this.destination = destination;
+
+        }
+
+        public void AddChange(BoardChange change)
+        {
+            Changes.Add(change);
+        }
+
+        public void AddChange(Vector2Int position, Piece oldPiece, Piece newPiece)
+        {
+            Changes.Add(new BoardChange(position, oldPiece, newPiece));
+        }
+
+        public void Apply(Board board)
+        {
+            foreach (var change in Changes)
+            {
+                board.PlacePiece(change.boardPosition, change.newPiece);
+            }
+        }
+
+        public void Undo(Board board)
+        {
+            foreach (var change in Changes)
+            {
+                board.PlacePiece(change.boardPosition, change.oldPiece);
+            }
         }
 
         public override string ToString()
         {
-            return $"Move: from {origin}, to {destination}";
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is not Move) return false;
-            Move other = (Move)obj;
-            return other.destination == destination && other.origin == origin;
-        }
-
-        // Probably some bullshit lol idk.
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(origin, destination);
+            return $"Move: from {1}, to {1}";
         }
     }
 }

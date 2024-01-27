@@ -34,8 +34,8 @@ namespace DChess.Multiplayer
 
 		public static byte[] ToBytes(Move move) {
 			List<byte> result = new();
-			result.AddRange(ToBytes(move.origin));
-			result.AddRange(ToBytes(move.destination));
+			//result.AddRange(ToBytes(move.origin));
+			//result.AddRange(ToBytes(move.destination));
 			return result.ToArray();
 		}
 
@@ -43,7 +43,7 @@ namespace DChess.Multiplayer
 			var origin = ToVector2Int(bytes.Take(INT_LENGTH * 2).ToArray());
 			var destination = ToVector2Int(bytes.Skip(INT_LENGTH * 2).Take(INT_LENGTH * 2).ToArray());
 
-			return new Move(origin, destination);
+			return new Move();
 		}
 	}
 }

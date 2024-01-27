@@ -99,8 +99,13 @@ namespace DChess
 				Debug.WriteLine($"Current Eval: {_boardManager.Board.GetEvaluaton()}");
 				lastKeyInput = 0;
 			}
+            if (keyState.IsKeyDown(Keys.D) && keyInputDelay <= lastKeyInput)
+            {
+				_boardManager.Board.UndoLastMove();
+                lastKeyInput = 0;
+            }
 
-			base.Update(gameTime);
+            base.Update(gameTime);
 		}
 
 		public void SwitchScene(SceneType scene) {
