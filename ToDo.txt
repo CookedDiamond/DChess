@@ -28,6 +28,8 @@
 - Promotion on last enabled square not fixed.
 ? Implement visual queue for disapearing squares -> Mines etc.
 - fix flipping im to down rn sowwy :(
+- load position from input file
+- (LONG) play automatically vs different bot versions.
 
 line count: 
 git ls-files | grep '\.cs' | xargs wc -l

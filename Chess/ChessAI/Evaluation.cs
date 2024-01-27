@@ -10,40 +10,32 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.ChessAI
 {
-    public abstract class Evaluation {
+    public class Evaluation {
 
 		protected Board _board;
 
-		protected Evaluation(Board board) {
+		public Evaluation(Board board) {
 			_board = board;
 		}
 
 		// Positive -> white is ahead, negative -> black is ahead.
 		public float GetEvaluation() {
 			float evalDiff = getEvaluation(TeamType.White) - getEvaluation(TeamType.Black);
-			float randomOffset = ((float) new Random().NextDouble() - 0.5f) * 0.25f;
+			float randomOffset = ((float) new Random().NextDouble() - 0.5f) * 0.01f;
 			return evalDiff + randomOffset;
 		}
 
 		private float getEvaluation(TeamType team) {
 
-			// Min value if no king is existant.
-			var kingsCount = _board.GetPiecesFromTeamWithType(PieceType.King, team).Count;
-			if (kingsCount <= 0) {
-				return float.MinValue;
-			}
-
 			var teamPiecesPair = _board.GetAllPiecesFromTeam(team);
 			float result = 0;
 			foreach (var pair in teamPiecesPair) {
-				float pieceScore = getPieceScore(pair.Value, pair.Key);
+				float pieceScore = pair.Value.GetPieceScore(_board,position: pair.Key, team);
 				result += pieceScore;
 				// Debug.WriteLine($"Current result: {result} Current Piece: {square.Piece} Current Piece Score: {pieceScore}");
 			}
 			return result;
 		}
-
-		protected abstract float getPieceScore(Piece piece, Vector2Int position);
 
 	}
 }

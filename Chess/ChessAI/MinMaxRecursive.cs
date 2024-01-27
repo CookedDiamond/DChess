@@ -12,16 +12,28 @@ namespace DChess.Chess.ChessAI
     public class MinMaxRecursive {
 
 		private long _posAnalysed = 0;
+		private long _skipped = 0;
 		private List<MoveEvalPair> _nextMoves = new();
-		private int _maxDepth = 7;
+		private int _maxDepth = 4;
+		private readonly float lastEvalBoundry = 3.5f;
+		private readonly float lastEval;
+
+		public MinMaxRecursive(float lastEval) {
+			this.lastEval = lastEval;
+		}
 
 		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite) {
 			_posAnalysed++;
+			float boardEval = board.GetEvaluaton();
 			if (_posAnalysed % 25000 == 0) {
-				Debug.WriteLine($"Positions analysed: {_posAnalysed}.");
+				Debug.WriteLine($"Positions analysed: {_posAnalysed} and {_skipped} trees skipped.");
+			}
+			if (Math.Abs(lastEval) + lastEvalBoundry < Math.Abs(boardEval)) {
+				_skipped++;
+				return boardEval;
 			}
 			if (depth == 0 || board.HasTeamWon() != TeamType.None) {
-				return board.GetEvaluaton();
+				return boardEval;
 			}
 
 			if (isWhite) {
@@ -68,14 +80,15 @@ namespace DChess.Chess.ChessAI
 			}
 		}
 
-		public Move GetBestMove(Board board) {
-			if (board.GetTotalPieceCount() <= 4) _maxDepth += 1;
+		public Move GetBestMove(Board board, out float lastEval) {
 			if (board.GetTotalPieceCount() <= 7) _maxDepth += 1;
+			if (board.GetTotalPieceCount() <= 13) _maxDepth += 1;
 			bool isWhite = board.IsWhitesTurn;
-			var currPos = evalOfPos(board, _maxDepth, float.MinValue, float.MaxValue, isWhite);
-			Debug.WriteLine($"Current Eval: {currPos}");
+			lastEval = evalOfPos(board, _maxDepth, float.MinValue, float.MaxValue, isWhite);
+			Debug.WriteLine($"Current Eval: {lastEval}");
 			if (isWhite) {
 				MoveEvalPair best = _nextMoves.MaxBy(t => t.Evaluation);
+				
 				return best.Move;
 			}
 			else {

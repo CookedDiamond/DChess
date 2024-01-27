@@ -26,6 +26,8 @@ namespace DChess.Chess.Playground {
 		public bool IsWhitesTurn => _moveHistory.Count % 2 == (START_TEAM == TeamType.White ? 0 : 1);
 		public List<Variant> Variants { get; set; }
 
+		private float lastEval = 0;
+
 		public Board(Vector2Int size) {
 			Size = size;
 			Variants = new List<Variant>();
@@ -78,8 +80,8 @@ namespace DChess.Chess.Playground {
 
 		public void MakeComputerMove() {
 			if (HasTeamWon() != TeamType.None) return;
-			var algo = new MinMaxRecursive();
-			var move = algo.GetBestMove(this);
+			var algo = new MinMaxRecursive(lastEval);
+			var move = algo.GetBestMove(this, out lastEval);
 			MakeMove(move);
 		}
 
@@ -141,7 +143,7 @@ namespace DChess.Chess.Playground {
 			return _moveHistory.Last();
 		}
 		public float GetEvaluaton() {
-			return new StandartEvaluation(this).GetEvaluation();
+			return new Evaluation(this).GetEvaluation();
 		}
 
 		public int GetTotalPieceCount() {

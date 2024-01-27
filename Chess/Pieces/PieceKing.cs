@@ -16,6 +16,14 @@ namespace DChess.Chess.Pieces
 			return ChessUtil.CombineLists(getKingMoves(fromPosition), base.GetAllLegalMoves(fromPosition));
 		}
 
+		public override float GetPieceScore() {
+			return 1000f;
+		}
+
+		public override float GetPieceScore(Board board, Vector2Int positon, TeamType team) {
+			return GetPieceScore();
+		}
+
 		private List<Move> getKingMoves(Vector2Int fromPosition) {
 			List<Vector2Int> moves = new();
 

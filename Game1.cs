@@ -67,6 +67,10 @@ namespace DChess
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
 				Exit();
 
+			if (_boardManager.GetComputerPlayerTeamType() != null && _boardManager.GetComputerPlayerTeamType() == _boardManager.Board.GetTurnTeamType()) {
+				_boardManager.Board.MakeComputerMove();
+			}
+
 			_gameScaling.Update();
 
 			// Mouse Inputs.

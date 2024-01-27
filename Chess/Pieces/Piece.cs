@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.Pieces
 {
-    public class Piece {
+    public abstract class Piece {
 
 		public static readonly Piece NULL_PIECE = new PieceNull();
 
@@ -83,6 +83,10 @@ namespace DChess.Chess.Pieces
 			}
 			return MoveType.OutOfBounds;
 		}
+
+		public abstract float GetPieceScore();
+
+		public abstract float GetPieceScore(Board board, Vector2Int position, TeamType team);
 
 		public override string ToString() {
 			return $"type: {TypeAsChar(this)} team: {teamAsString(this)}";

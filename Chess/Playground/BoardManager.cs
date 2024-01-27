@@ -15,7 +15,7 @@ namespace DChess.Chess.Playground {
 		public readonly BoardUI BoardUI;
 		public readonly BoardNetworking BoardNetworking;
 
-		private TeamType _computerPlayer;
+		private TeamType? _computerPlayer = null;
 
 		public BoardManager(Board board, BoardNetworking boardNetworking) {
 			Board = board;
@@ -27,7 +27,7 @@ namespace DChess.Chess.Playground {
 			_computerPlayer = team;
 
 			if (team == Board.START_TEAM && Board.GetMoveCount() == 0) {
-				Board.MakeComputerMove();
+				//Board.MakeComputerMove();
 			}
 		}
 
@@ -36,8 +36,12 @@ namespace DChess.Chess.Playground {
 				BoardNetworking.MakeMove(move);
 			}
 			if (_computerPlayer == Board.GetTurnTeamType()) {
-				Board.MakeComputerMove();
+				//Board.MakeComputerMove();
 			}
+		}
+
+		public TeamType? GetComputerPlayerTeamType() {
+			return _computerPlayer;
 		}
 
 		public void Build8x8StandardBoard() {
