@@ -7,11 +7,9 @@
 
 ? En passant
 ? Castling
-!! change move to contain a multiple BoardChanges and no longer hard one piece moves.
 - add is check and isCapture to Move
-- use isCHeck and isCapture in MinMax to sort moves. (think about other criteria to sort. best move should be first)
-! add move history which so you can go back 
-! change MinMax to make moves and undo in same board (memory efficiency!)
+- use isCheck and isCapture in MinMax to sort moves. (think about other criteria to sort. best move should be first)
+
 - find solution so battle royale can be undone (should be possible with new move system so multiple changes can be done)
 - Ideas for chess variants, Board can be a specific game mode.
 	- 6th rank pawn sack for deleting square from board.
@@ -34,6 +32,9 @@
 - load position from input file
 - (LONG) play automatically vs different bot versions.
 - fix online
+
+Dead speed up ideas: 
+?? change MinMax to make moves and undo in same board (memory efficiency!) does not work
 
 line count: 
 git ls-files | grep '\.cs' | xargs wc -l

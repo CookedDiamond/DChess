@@ -39,6 +39,22 @@ namespace DChess.Chess.Playground
             }
         }
 
+        public float IsAttack()
+        {
+            float maxAttack = 0;
+            foreach (var change in Changes)
+            {
+                if (change.newPiece != Piece.NULL_PIECE && change.oldPiece != Piece.NULL_PIECE)
+                {
+                    float pieceScore = change.oldPiece.GetPieceScore();
+                    if (pieceScore < maxAttack) continue;
+
+                    maxAttack = pieceScore;
+                }
+            }
+            return maxAttack;
+        }
+
         public override string ToString()
         {
             return $"Move: from {1}, to {1}";

@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
+using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
 
 namespace DChess
@@ -63,7 +65,26 @@ namespace DChess
 			_gameScaling.Initialize();
 		}
 
-		protected override void Update(GameTime gameTime) {
+		Stopwatch sw = new Stopwatch();
+
+		private void DoTest()
+		{
+            if (_boardManager.Board.GetMoveCount() <= 20 && lastKeyInput >= 100)
+            {
+                if (!sw.IsRunning)
+                {
+                    sw.Start();
+                }
+                _boardManager.Board.MakeComputerMove();
+            }
+            else
+            {
+                sw.Stop();
+                Debug.WriteLine($"time {Math.Round(sw.Elapsed.TotalSeconds, 2)}s, {StatLogger.BetaSkipps} beta skipps");
+            }
+        }
+
+        protected override void Update(GameTime gameTime) {
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
 				Exit();
 
@@ -71,7 +92,10 @@ namespace DChess
 				_boardManager.Board.MakeComputerMove();
 			}
 
-			_gameScaling.Update();
+			//DoTest();
+
+
+            _gameScaling.Update();
 
 			// Mouse Inputs.
 			var mouseState = Mouse.GetState();

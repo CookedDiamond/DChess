@@ -38,6 +38,11 @@ namespace DChess.Util
 			return moves;
 		}
 
+		public static void SortMovesByPotential(List<Move> moves)
+		{
+            moves.OrderBy(m => m.IsAttack());
+        }
+
 		public static List<Vector2Int> CreateDestinationsListFromMoveList(List<Move> moves) {
 			List<Vector2Int> destinations = new();
 			foreach (var move in moves)
