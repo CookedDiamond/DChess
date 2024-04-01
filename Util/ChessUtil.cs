@@ -38,9 +38,9 @@ namespace DChess.Util
 			return moves;
 		}
 
-		public static void SortMovesByPotential(List<Move> moves)
+        public static List<Move> SortMovesByPotential(List<Move> moves)
 		{
-            moves.OrderBy(m => m.IsAttack());
+            return moves.OrderBy(m => -m.AttackScore()).ToList(); // The '-' is important because the smallest value is the first one!
         }
 
 		public static List<Vector2Int> CreateDestinationsListFromMoveList(List<Move> moves) {

@@ -23,7 +23,6 @@ namespace DChess.Chess.Playground {
 		public SquareType[,] SquareMap;
 		public Vector2Int Size { get; set; }
 		public bool IsWhitesTurn => _moveHistory.Count % 2 == (START_TEAM == TeamType.White ? 0 : 1);
-        public float LastEval = 0;
         public List<Variant> Variants { get; set; }
 
         private readonly List<Move> _moveHistory = new();
@@ -76,8 +75,8 @@ namespace DChess.Chess.Playground {
 
 		public void MakeComputerMove() {
 			if (HasTeamWon() != TeamType.None) return;
-			var algo = new MinMaxRecursive(LastEval);
-			var move = algo.GetBestMove(this, out LastEval);
+			var algo = new MinMaxRecursive();
+			var move = algo.GetBestMove(this);
 			MakeMove(move);
 		}
 

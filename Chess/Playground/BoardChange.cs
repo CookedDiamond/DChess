@@ -18,5 +18,14 @@ namespace DChess.Chess.Playground {
 			this.newPiece = newPiece;
 			this.boardPosition = boardPosition;
 		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is not BoardChange) return false; 
+			BoardChange bc = (BoardChange)obj;
+			return (boardPosition == bc.boardPosition
+				&& oldPiece == bc.oldPiece
+				&& newPiece == bc.newPiece);
+		}
 	}
 }

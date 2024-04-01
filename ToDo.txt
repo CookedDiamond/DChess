@@ -1,37 +1,46 @@
 ---------------------------------------------------------------------------------------------------
-?: do maybe
--: should do
 !: do really soon
+-: should do
+?: do maybe
 (-): do later
 ---------------------------------------------------------------------------------------------------
 
-? En passant
-? Castling
-- add is check and isCapture to Move
-- use isCheck and isCapture in MinMax to sort moves. (think about other criteria to sort. best move should be first)
 
+- Castling
+- add is check to Move and to AttackScore()
 - find solution so battle royale can be undone (should be possible with new move system so multiple changes can be done)
-- Ideas for chess variants, Board can be a specific game mode.
-	- 6th rank pawn sack for deleting square from board.
-	! 2 kings
-	- connected lacer rooks
-	- round board
+- InputHandler
+
+- null piece so no more piece != null checks, store no null pieces though
+- generalisation of promoting on the last square
+- fix flipping im to down rn sowwy :(
+- load position from input file
+- Ingame setup positions easier
+- (LONG) play automatically vs different bot versions.
+- fix online
+
+? En passant
+? Implement visual queue for disapearing squares -> Mines etc.
+
+(- use async read and other async methods instead of while(true) with threads)
+	- close the 'while true threads' with windows "x"
+(- inform about write in network stream with different threads)
 (- Menu)
 	? Settings
 (- Settings in textfile (json))
 (- Overlay)
 (- Time controll)
-- InputHandler
-(- inform about write in network stream with different threads)
-? use async read and other async methods instead of while(true) with threads
-	- close the 'while true threads' with windows "x"
-! null piece so no more piece != null checks
-- generalisation of promoting on the last square!
-? Implement visual queue for disapearing squares -> Mines etc.
-- fix flipping im to down rn sowwy :(
-- load position from input file
-- (LONG) play automatically vs different bot versions.
-- fix online
+
+
+IDEAS for chess variants, Board can be a specific game mode.
+- 6th rank pawn sack for deleting square from board.
+- 2 kings
+- connected lacer rooks
+- round board
+
+Speed Up/ Better AI Ideas:
+- extends the best 3 moves to see which of those is better with a bit more depth, just searches the result path -1 depth
+- dont start multiple recursions but rather use threads in ONE recursion. Better Alpha-Beta-Pruning.
 
 Dead speed up ideas: 
 ?? change MinMax to make moves and undo in same board (memory efficiency!) does not work

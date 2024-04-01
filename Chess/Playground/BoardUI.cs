@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -65,10 +66,17 @@ namespace DChess.Chess.Playground {
 				var move = new Move();
 				move.AddChange(pos1, newPiece, Piece.NULL_PIECE);
 				move.AddChange(pos2, piece, newPiece);
-				_boardManager.MakeMove(move);
-				_legalMovesWithSelected = new List<Vector2Int>();
-				_selectedSquare = null;
-			}
+				if (newPiece.GetAllLegalMoves(pos1).Contains(move))
+				{
+					_boardManager.MakeMove(move);
+				}
+				else
+				{
+					Debug.WriteLine("Reset selection.");
+                }
+                _legalMovesWithSelected = new List<Vector2Int>();
+                _selectedSquare = null;
+            }
 		}
 
 

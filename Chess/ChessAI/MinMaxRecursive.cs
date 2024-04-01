@@ -11,152 +11,162 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.ChessAI
 {
-    public class MinMaxRecursive
-    {
+	public class MinMaxRecursive
+	{
+        private static readonly bool USE_MULTI_THREADING = true;
+        private static readonly bool USE_LESS_PIECE_EXTENSIONS = true;
 
         private long _posAnalysed = 0;
-        private long _skipped = 0;
-        private long _skippedBeta = 0;
-        private List<MoveEvalPair> _nextMoves = new();
-        private int _maxDepth = 4;
-        private readonly float lastEvalBoundry = 3.5f;
-        private readonly float lastEval;
+		private long _skippedBeta = 0;
+		private List<MoveEvalPair> _nextMoves = new();
+		private int _maxDepth = 3;
+		
 
-        public MinMaxRecursive(float lastEval)
-        {
-            this.lastEval = lastEval;
-        }
+		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite)
+		{
+			_posAnalysed++;
+			if (_posAnalysed % 50000 == 0)
+			{
+				Debug.WriteLine($"Positions analysed: {_posAnalysed}.");
+			}
+			if (depth == 0 || board.HasTeamWon() != TeamType.None)
+			{
+				float eval = board.GetEvaluaton();
+                return eval;
+			}
 
-        private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite)
-        {
-            _posAnalysed++;
-            float boardEval = board.GetEvaluaton();
-            if (_posAnalysed % 50000 == 0)
-            {
-                Debug.WriteLine($"Positions analysed: {_posAnalysed} and {_skipped} trees skipped.");
-            }
-            if (Math.Abs(lastEval) + lastEvalBoundry < Math.Abs(boardEval))
-            {
-                _skipped++;
-                return boardEval;
-            }
-            if (depth == 0 || board.HasTeamWon() != TeamType.None)
-            {
-                return boardEval;
-            }
+			if (isWhite)
+			{
+				float maxEval = float.MinValue;
+				List<Move> legalMoves = board.GetAllLegalMovesForTeam(TeamType.White);
+				ChessUtil.SortMovesByPotential(legalMoves);
+				foreach (Move move in legalMoves)
+				{
+					var clonedBoard = board.CloneBoard();
+					clonedBoard.MakeMove(move);
+					float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
+					maxEval = Math.Max(maxEval, eval);
+					alpha = Math.Max(alpha, eval);
 
-            if (isWhite)
-            {
-                float maxEval = float.MinValue;
-                List<Move> legalMoves = board.GetAllLegalMovesForTeam(TeamType.White);
-                ChessUtil.SortMovesByPotential(legalMoves);
-                foreach (Move move in legalMoves)
-                {
-                    var clonedBoard = board.CloneBoard();
-                    clonedBoard.MakeMove(move);
-                    float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
-                    maxEval = Math.Max(maxEval, eval);
-                    alpha = Math.Max(alpha, eval);
+					if (beta <= alpha)
+					{
+						_skippedBeta++;
+						break;
+					}
+				}
 
-                    if (beta <= alpha)
-                    {
-                        _skippedBeta++;
-                        break;
-                    }
-                }
+				return maxEval;
+			}
 
-                return maxEval;
-            }
+			else
+			{
+				float minEval = float.MaxValue;
+				List<Move> legalMoves = board.GetAllLegalMovesForTeam(TeamType.Black);
+				ChessUtil.SortMovesByPotential(legalMoves);
+				foreach (Move move in legalMoves)
+				{
+					var clonedBoard = board.CloneBoard();
+					clonedBoard.MakeMove(move);
+					float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
+					minEval = Math.Min(minEval, eval);
+					beta = Math.Min(beta, eval);
 
-            else
-            {
-                float minEval = float.MaxValue;
-                List<Move> legalMoves = board.GetAllLegalMovesForTeam(TeamType.Black);
-                ChessUtil.SortMovesByPotential(legalMoves);
-                foreach (Move move in legalMoves)
-                {
-                    var clonedBoard = board.CloneBoard();
-                    clonedBoard.MakeMove(move);
-                    float eval = evalOfPos(clonedBoard, depth - 1, alpha, beta, !isWhite);
-                    minEval = Math.Min(minEval, eval);
-                    beta = Math.Min(beta, eval);
+					if (beta <= alpha)
+					{
+						_skippedBeta++;
+						break;
+					}
+				}
+				return minEval;
+			}
+		}
 
-                    if (beta <= alpha)
-                    {
-                        _skippedBeta++;
-                        break;
-                    }
-                }
-                return minEval;
-            }
-        }
-
-        private void startRecursion(Board board, bool isWhite)
-        {
-            List<Move> firstMoves;
-            if (isWhite)
-            {
-                firstMoves = board.GetAllLegalMovesForTeam(TeamType.White);
-            }
-            else
-            {
-                firstMoves = board.GetAllLegalMovesForTeam(TeamType.Black);
-            }
+		private void StartRecursion(Board board, bool isWhite)
+		{
+			List<Move> firstMoves;
+			if (isWhite)
+			{
+				firstMoves = board.GetAllLegalMovesForTeam(TeamType.White);
+			}
+			else
+			{
+				firstMoves = board.GetAllLegalMovesForTeam(TeamType.Black);
+			}
+            firstMoves = ChessUtil.SortMovesByPotential(firstMoves);
             Move[] arrayMoves = firstMoves.ToArray();
 
-            Parallel.ForEach(arrayMoves, (move) =>
-            {
-                var clonedBoard = board.CloneBoard();
-                clonedBoard.MakeMove(move);
-                float eval = evalOfPos(board, _maxDepth, float.MinValue, float.MaxValue, isWhite);
-                _nextMoves.Add(new MoveEvalPair(move, eval));
-            });
+			if (USE_MULTI_THREADING)
+			{
+				Parallel.ForEach(arrayMoves, (move) =>
+				{
+					StartRecursiveTree(board, move);
+				});
+			}
+			else
+			{
+				foreach (Move move in arrayMoves)
+				{
+					StartRecursiveTree(board, move);
+				}
+			}
+		}
+
+		private void StartRecursiveTree(Board board, Move move) {
+            var clonedBoard = board.CloneBoard();
+            clonedBoard.MakeMove(move);
+            float eval = evalOfPos(clonedBoard, _maxDepth, float.MinValue, float.MaxValue, clonedBoard.IsWhitesTurn);
+            _nextMoves.Add(new MoveEvalPair(move, eval));
+			Debug.WriteLine($"Added Move {move} with eval {eval}.");
         }
 
-        public Move GetBestMove(Board board, out float lastEval)
-        {
-            bool isWhite = board.IsWhitesTurn;
-            if (board.GetTotalPieceCount() <= 7) _maxDepth += 1;
-            if (board.GetTotalPieceCount() <= 13) _maxDepth += 1;
+		public Move GetBestMove(Board board)
+		{
+			float bestEval;
+			bool isWhite = board.IsWhitesTurn;
+			if (USE_LESS_PIECE_EXTENSIONS)
+			{
+				if (board.GetTotalPieceCount() <= 7) _maxDepth += 1;
+				if (board.GetTotalPieceCount() <= 13) _maxDepth += 1;
+			}
 
-            var watch = new Stopwatch();
-            watch.Start();
-            startRecursion(board, isWhite);
-            watch.Stop();
+			var watch = new Stopwatch();
+			watch.Start();
+			StartRecursion(board, isWhite);
+			watch.Stop();
 
-            
-            Move returnMove;
+			
+			Move returnMove;
 
-            if (isWhite)
-            {
-                MoveEvalPair best = _nextMoves.MaxBy(t => t.Evaluation);
-                lastEval = best.Evaluation;
-                returnMove = best.Move;
-            }
-            else
-            {
-                MoveEvalPair best = _nextMoves.MinBy(t => t.Evaluation);
-                lastEval = best.Evaluation;
-                returnMove = best.Move;
-            }
+			if (isWhite)
+			{
+				MoveEvalPair best = _nextMoves.MaxBy(t => t.Evaluation);
+				bestEval = best.Evaluation;
+				returnMove = best.Move;
+			}
+			else
+			{
+				MoveEvalPair best = _nextMoves.MinBy(t => t.Evaluation);
+				bestEval = best.Evaluation;
+				returnMove = best.Move;
+			}
 
-            Debug.WriteLine($"Positions analysed: {_posAnalysed} and {_skipped} (eval) {_skippedBeta} (beta) trees skipped.");
-            Debug.WriteLine($"Eval: {lastEval}, Time: {Math.Round(watch.Elapsed.TotalSeconds, 2)}s, PpS: {Math.Round(_posAnalysed / watch.Elapsed.TotalSeconds)}");
+			Debug.WriteLine($"Positions analysed: {_posAnalysed}, {_skippedBeta} (beta) trees skipped.");
+			Debug.WriteLine($"Eval: {bestEval}, Time: {Math.Round(watch.Elapsed.TotalSeconds, 2)}s, PpS: {Math.Round(_posAnalysed / watch.Elapsed.TotalSeconds)}");
 
-            return returnMove;
-        }
+			return returnMove;
+		}
 
-    }
+	}
 
-    public struct MoveEvalPair
-    {
-        public Move Move;
-        public float Evaluation;
+	public struct MoveEvalPair
+	{
+		public Move Move;
+		public float Evaluation;
 
-        public MoveEvalPair(Move move, float eval)
-        {
-            Move = move;
-            Evaluation = eval;
-        }
-    }
+		public MoveEvalPair(Move move, float eval)
+		{
+			Move = move;
+			Evaluation = eval;
+		}
+	}
 }
