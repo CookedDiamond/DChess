@@ -63,10 +63,8 @@ namespace DChess.Chess.Playground {
 				var pos1 = _selectedSquare.Position;
 				var pos2 = squareUI.Position;
 				var newPiece = _board.GetPiece(pos1);
-				var move = new Move();
-				move.AddChange(pos1, newPiece, Piece.NULL_PIECE);
-				move.AddChange(pos2, piece, newPiece);
-				if (newPiece.GetAllLegalMoves(pos1).Contains(move))
+				var move = newPiece.GetMove(pos1, pos2);
+				if (move != null)
 				{
 					_boardManager.MakeMove(move);
 				}

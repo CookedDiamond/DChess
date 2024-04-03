@@ -19,7 +19,7 @@ namespace DChess.Chess.ChessAI
         private long _posAnalysed = 0;
 		private long _skippedBeta = 0;
 		private List<MoveEvalPair> _nextMoves = new();
-		private int _maxDepth = 3;
+		private int _maxDepth = 4;
 		
 
 		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite)
@@ -125,8 +125,8 @@ namespace DChess.Chess.ChessAI
 			bool isWhite = board.IsWhitesTurn;
 			if (USE_LESS_PIECE_EXTENSIONS)
 			{
-				if (board.GetTotalPieceCount() <= 7) _maxDepth += 1;
-				if (board.GetTotalPieceCount() <= 13) _maxDepth += 1;
+				if (board.GetTotalPieceCount() <= 4) _maxDepth += 1;
+				if (board.GetTotalPieceCount() <= 12) _maxDepth += 1;
 			}
 
 			var watch = new Stopwatch();
