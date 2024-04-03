@@ -9,7 +9,8 @@
 - Castling
 - add is check to Move and to AttackScore()
 - find solution so battle royale can be undone (should be possible with new move system so multiple changes can be done)
-- InputHandler
+- InputHandler 
+- Undo possible with computer player enemy
 
 - null piece so no more piece != null checks, store no null pieces though
 - generalisation of promoting on the last square

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.Pieces
 {
-    public abstract class Piece {
+	public abstract class Piece {
 
 		public static readonly Piece NULL_PIECE = new PieceNull();
 
@@ -17,12 +17,15 @@ namespace DChess.Chess.Pieces
 
 		public TeamType Team { get; set; }
 
+		public int MoveCount { get; set; }
+
 		protected readonly Board _board;
 
 		public Piece(PieceType type, TeamType team, Board board) {
 			Type = type;
 			Team = team;
 			_board = board;
+            MoveCount = 0;
 		}
 
 		public virtual List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
@@ -35,6 +38,30 @@ namespace DChess.Chess.Pieces
 			}
 
 			return moves;
+		}
+
+		public virtual Move GetMove(Vector2Int fromPosition, Vector2Int toPosition) {
+			var moves = GetAllLegalMoves(fromPosition);
+			foreach (var move in moves) {
+				bool containsFromPos = false;
+				bool containsToPos = false;
+
+				foreach (var change in move.Changes)
+				{
+					if (change.boardPosition == toPosition) {
+						containsToPos = true;
+					}
+					if (change.boardPosition == fromPosition) {
+                        containsFromPos = true;
+					}
+					if (containsFromPos && containsToPos) { 
+						return move;
+					}
+				}
+				
+			}
+
+			return null;
 		}
 
 		protected List<Move> getMovesInDirection(Vector2Int fromPosition, Vector2Int direction) {

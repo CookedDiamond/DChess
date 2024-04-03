@@ -52,6 +52,7 @@ namespace DChess.Util
 					if (change.newPiece != Piece.NULL_PIECE)
 					{
 						destinations.Add(change.boardPosition);
+						break;
 					}
 				}
 			}

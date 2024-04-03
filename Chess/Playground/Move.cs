@@ -30,6 +30,10 @@ namespace DChess.Chess.Playground
 			foreach (var change in Changes)
 			{
 				board.PlacePiece(change.boardPosition, change.newPiece);
+				if (change.oldPiece == Piece.NULL_PIECE)
+				{
+					change.newPiece.MoveCount += 1;
+				}
 			}
 		}
 
@@ -38,7 +42,12 @@ namespace DChess.Chess.Playground
 			foreach (var change in Changes)
 			{
 				board.PlacePiece(change.boardPosition, change.oldPiece);
-			}
+
+                if (change.newPiece == Piece.NULL_PIECE)
+                {
+                    change.oldPiece.MoveCount -= 1;
+                }
+            }
 		}
 
 		public float AttackScore()
