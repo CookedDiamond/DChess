@@ -3,12 +3,8 @@ using DChess.Util;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DChess.Chess.Pieces
-{
+namespace DChess.Chess.Pieces {
 	public abstract class Piece {
 
 		public static readonly Piece NULL_PIECE = new PieceNull();
@@ -25,7 +21,7 @@ namespace DChess.Chess.Pieces
 			Type = type;
 			Team = team;
 			_board = board;
-            MoveCount = 0;
+			MoveCount = 0;
 		}
 
 		public virtual List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
@@ -52,7 +48,7 @@ namespace DChess.Chess.Pieces
 						containsToPos = true;
 					}
 					if (change.boardPosition == fromPosition) {
-                        containsFromPos = true;
+						containsFromPos = true;
 					}
 					if (containsFromPos && containsToPos) { 
 						return move;
@@ -158,17 +154,23 @@ namespace DChess.Chess.Pieces
 			};
 		}
 
-		public static Piece GetPieceFromType(PieceType type, TeamType team, Board board) {
-			return type switch { 
-				PieceType.Pawn => new PiecePawn(team, board),
-				PieceType.Bishop => new PieceBishop(team, board),
-				PieceType.Knight => new PieceKnight(team, board),
-				PieceType.Rook => new PieceRook(team, board),
-				PieceType.Queen => new PieceQueen(team, board),
-				PieceType.King => new PieceKing(team, board),
+		private Piece getPieceFromType() {
+			return Type switch { 
+				PieceType.Pawn => new PiecePawn(Team, _board),
+				PieceType.Bishop => new PieceBishop(Team, _board),
+				PieceType.Knight => new PieceKnight(Team, _board),
+				PieceType.Rook => new PieceRook(Team, _board),
+				PieceType.Queen => new PieceQueen(Team, _board),
+				PieceType.King => new PieceKing(Team, _board),
 				PieceType.None => NULL_PIECE,
 				_ => throw new NotImplementedException()	
 			};
+		}
+
+		public Piece ClonePiece() {
+			Piece clonedPiece = getPieceFromType();
+			clonedPiece.MoveCount = MoveCount;
+			return clonedPiece;
 		}
 	}
 

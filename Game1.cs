@@ -12,19 +12,14 @@ using System.DirectoryServices.ActiveDirectory;
 using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
 
-namespace DChess
-{
+namespace DChess {
 	public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
 		private static ScalingUtil _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
-		// Mouse variables TODO: make Inputhandler Class
-		private bool _lastMouseStateWasPressed = false;
-		private const int _keyInputDelay = 20;
-		private int _lastKeyInput = 0;
-
 		private readonly BoardManager _boardManager;
+		private readonly InputHandler _inputHandler;
 
 		private Scene _menuScene;
 		private Scene _boardScene;
@@ -35,6 +30,7 @@ namespace DChess
 
 		public Game1(BoardManager boardManager) {
 			_boardManager = boardManager;
+			_inputHandler = new InputHandler();
 
 			_graphics = new GraphicsDeviceManager(this);
 			_gameScaling = new ScalingUtil(boardManager.Board, this, _graphics);
@@ -65,69 +61,16 @@ namespace DChess
 			_gameScaling.Initialize();
 		}
 
-		Stopwatch sw = new Stopwatch();
-
-		private void DoTest()
-		{
-			if (_boardManager.Board.GetMoveCount() <= 20 && _lastKeyInput >= 100)
-			{
-				if (!sw.IsRunning)
-				{
-					sw.Start();
-				}
-				_boardManager.Board.MakeComputerMove();
-			}
-			else
-			{
-				sw.Stop();
-				Debug.WriteLine($"time {Math.Round(sw.Elapsed.TotalSeconds, 2)}s, {StatLogger.BetaSkipps} beta skipps");
-			}
-		}
-
 		protected override void Update(GameTime gameTime) {
-			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-				Exit();
-
-			if (_boardManager.GetComputerPlayerTeamType() != null && _boardManager.GetComputerPlayerTeamType() == _boardManager.Board.GetTurnTeamType()) {
-				_boardManager.Board.MakeComputerMove();
+			// Computer move
+			if (_boardManager.GetComputerPlayerTeamType() != null
+				&& _boardManager.GetComputerPlayerTeamType() == _boardManager.Board.GetTurnTeamType()) {
+				_boardManager.MakeComputerMove();
 			}
-
-			//DoTest();
-
 
 			_gameScaling.Update();
 
-			// Mouse Inputs.
-			var mouseState = Mouse.GetState();
-			var mousePos = new Vector2Int(mouseState.X, mouseState.Y);
-			_activeScene.MouseHover(mousePos);
-			if (_lastMouseStateWasPressed && mouseState.LeftButton == ButtonState.Released) {
-				_activeScene.MouseClick(mousePos);
-			}
-
-			if (mouseState.LeftButton == ButtonState.Pressed) {
-				_lastMouseStateWasPressed = true;
-			}
-			else {
-				_lastMouseStateWasPressed = false;
-			}
-
-			// Key Inputs.
-			_lastKeyInput++;
-			KeyboardState keyState = Keyboard.GetState();
-			if (keyState.IsKeyDown(Keys.A) && _keyInputDelay <= _lastKeyInput) {
-				_boardManager.Board.MakeComputerMove();
-				_lastKeyInput = 0;
-			}
-			if (keyState.IsKeyDown(Keys.S) && _keyInputDelay <= _lastKeyInput) {
-				Debug.WriteLine($"Current Eval: {_boardManager.Board.GetEvaluaton()}");
-				_lastKeyInput = 0;
-			}
-			if (keyState.IsKeyDown(Keys.D) && _keyInputDelay <= _lastKeyInput)
-			{
-				_boardManager.Board.UndoLastMove();
-				_lastKeyInput = 0;
-			}
+			_inputHandler.HandleInputs(Mouse.GetState(), _activeScene, _boardManager);
 
 			base.Update(gameTime);
 		}
@@ -140,6 +83,8 @@ namespace DChess
 				case SceneType.Menu:
 					_activeScene = _menuScene;
 					break;
+				case SceneType.None:
+					throw new NotImplementedException();
 				default:
 					throw new NotImplementedException();
 			}

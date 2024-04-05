@@ -8,7 +8,7 @@ using SharpDX.Direct3D11;
 
 namespace DChess.Util
 {
-    public static class ChessUtil {
+	public static class ChessUtil {
 
 		public static List<T> CombineLists<T>(List<T> moves1, List<T> moves2) {
 			foreach (var move in moves2) {
@@ -38,10 +38,10 @@ namespace DChess.Util
 			return moves;
 		}
 
-        public static List<Move> SortMovesByPotential(List<Move> moves)
+		public static List<Move> SortMovesByPotential(List<Move> moves)
 		{
-            return moves.OrderBy(m => -m.AttackScore()).ToList(); // The '-' is important because the smallest value is the first one!
-        }
+			return moves.OrderBy(m => -m.AttackScore()).ToList(); // The '-' is important because the smallest value is the first one!
+		}
 
 		public static List<Vector2Int> CreateDestinationsListFromMoveList(List<Move> moves) {
 			List<Vector2Int> destinations = new();

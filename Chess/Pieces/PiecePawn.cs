@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.Pieces
 {
-    public class PiecePawn : Piece {
+	public class PiecePawn : Piece {
 		public PiecePawn(TeamType team, Board board) : base(PieceType.Pawn, team, board) {
 		}
 

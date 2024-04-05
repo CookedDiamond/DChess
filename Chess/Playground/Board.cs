@@ -83,13 +83,6 @@ namespace DChess.Chess.Playground {
 			}
 		}
 
-		public void MakeComputerMove() {
-			if (HasTeamWon() != TeamType.None) return;
-			var algo = new MinMaxRecursive();
-			var move = algo.GetBestMove(this);
-			MakeMove(move);
-		}
-
 		public TeamType GetTurnTeamType() {
 			return IsWhitesTurn ? START_TEAM : SECOND_TEAM;
 		}
@@ -185,7 +178,7 @@ namespace DChess.Chess.Playground {
 		}
 
 		public Board CloneBoard() {
-			Board returnBoard = new(Size);
+			Board returnBoard = new (Size);
 
 			for (int x = 0; x < Size.x; x++) {
 				for (int y = 0; y < Size.y; y++) {
@@ -195,7 +188,7 @@ namespace DChess.Chess.Playground {
 
 			foreach (var pair in Pieces) {
 				var oldPiece = pair.Value;
-				returnBoard.PlacePiece(pair.Key, Piece.GetPieceFromType(oldPiece.Type, oldPiece.Team, returnBoard));
+				returnBoard.PlacePiece(pair.Key, oldPiece.ClonePiece());
 			}
 
 			foreach (var move in _moveHistory) {

@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace DChess.Chess.Variants
 {
-    public class VariantBattleRoyale : Variant {
+	public class VariantBattleRoyale : Variant {
 
 		private readonly int _decreasingIntervall;
 		private readonly float _decreasingStrenth;

@@ -19,7 +19,7 @@ namespace DChess.Chess.ChessAI
         private long _posAnalysed = 0;
 		private long _skippedBeta = 0;
 		private List<MoveEvalPair> _nextMoves = new();
-		private int _maxDepth = 4;
+		private int _maxDepth = 3;
 		
 
 		private float evalOfPos(Board board, int depth, float alpha, float beta, bool isWhite)

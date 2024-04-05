@@ -1,4 +1,5 @@
-﻿using DChess.Chess.Pieces;
+﻿using DChess.Chess.ChessAI;
+using DChess.Chess.Pieces;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
@@ -11,11 +12,12 @@ using System.Threading.Tasks;
 namespace DChess.Chess.Playground {
 	public class BoardManager {
 
-		public readonly Board Board;
-		public readonly BoardUI BoardUI;
+		public Board Board { get; private set; }
+		public BoardUI BoardUI { get; private set; }
 		public readonly BoardNetworking BoardNetworking;
 
 		private TeamType? _computerPlayer = null;
+		private bool unDidLastMove = false;
 
 		public BoardManager(Board board, BoardNetworking boardNetworking) {
 			Board = board;
@@ -25,19 +27,31 @@ namespace DChess.Chess.Playground {
 
 		public void AddComputerPlayer(TeamType team) {
 			_computerPlayer = team;
+		}
 
-			if (team == Board.START_TEAM && Board.GetMoveCount() == 0) {
-				//Board.MakeComputerMove();
-			}
+		public void MakeComputerMove(bool automatic = true) {
+			if (automatic && unDidLastMove) return;
+			if (!automatic && unDidLastMove) unDidLastMove = false;
+			if (Board.HasTeamWon() != TeamType.None) return;
+			var algo = new MinMaxRecursive();
+			var move = algo.GetBestMove(Board);
+			Board.MakeMove(move);
 		}
 
 		public void MakeMove(Move move) {
 			if (Board.MakeMove(move)) {
+				//TODO: fix with online update.
 				BoardNetworking.MakeMove(move);
 			}
-			if (_computerPlayer == Board.GetTurnTeamType()) {
-				//Board.MakeComputerMove();
-			}
+		}
+
+		/// <summary>
+		/// Difference to Board.UndoLastMove is that it now disables the automatic AI response.
+		/// Else you undo the AI move and then the AI redoes it instantly.
+		/// </summary>
+		public void UndoLastMove() {
+			Board.UndoLastMove();
+			unDidLastMove = true;
 		}
 
 		public TeamType? GetComputerPlayerTeamType() {

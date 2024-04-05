@@ -7,39 +7,45 @@
 
 
 - fix undo battle royale (should be possible with new move system so multiple changes can be done)
-- Undo possible with computer player enemy
-- InputHandler 
+- Implement visual queue for disapearing squares -> Mines etc.
+- REMOVE CLONING! do everything with undo
+	- more memory efficient
+	- easier to implement, no custom clone functions needed!
+	- fixes castling bug with MoveCount
 
+- move history go forward
 - null piece so no more piece != null checks, store no null pieces though
 - fix flipping im to down rn sowwy :(
 - setup custom positions ingame
-- (LONG) play automatically vs different bot versions.
-- (LONG?) fix online
-- Implement visual queue for disapearing squares -> Mines etc.
-- Implement undo with battle royale
-
-? En passant
 
 
+
+
+(- (LONG) play automatically vs different bot versions.)
+(- (LONG?) fix online)
+(- Settings in textfile (json))
 (- use async read and other async methods instead of while(true) with threads)
 	- close the 'while true threads' with windows "x"
 (- inform about write in network stream with different threads)
 (- Menu)
 	? Settings
-(- Settings in textfile (json))
 (- Overlay)
 (- Time controll)
 
 
 IDEAS for chess variants, Board can be a specific game mode.
+- En passant
 - 6th rank pawn sack for deleting square from board.
 - 2 kings
 - connected lacer rooks
 - round board
+- multiple moves per turn
 
 Speed Up/ Better AI Ideas:
-- extends the best 3 moves to see which of those is better with a bit more depth, just searches the result path -1 depth
-- dont start multiple recursions but rather use threads in ONE recursion. Better Alpha-Beta-Pruning.
+- Transposition Table, store past evaluations
+- extends the best x moves to see which of those is better with a bit more depth, just searches the result path -1 depth
+- don't use recursion so you can search layer by layer.
+(- dont start multiple recursions but rather use threads in ONE recursion. Better Alpha-Beta-Pruning.)
 
 Dead speed up ideas: 
 ?? change MinMax to make moves and undo in same board (memory efficiency!) does not work

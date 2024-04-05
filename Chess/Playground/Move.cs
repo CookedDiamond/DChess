@@ -46,6 +46,8 @@ namespace DChess.Chess.Playground
 			}
 		}
 
+
+		/// <returns>The value of the attacked Piece.</returns>
 		public float AttackScore()
 		{
 			float maxAttack = 0;

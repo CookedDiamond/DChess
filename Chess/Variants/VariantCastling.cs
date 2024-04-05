@@ -27,11 +27,11 @@ namespace DChess.Chess.Variants {
 			for (int x = xPos - 1; x >= 0; x--) {
 				var sidePiece = board.GetPiece(new Vector2Int(x, position.y));
 
-                if (sidePiece.Type == PieceType.Rook
+				if (sidePiece.Type == PieceType.Rook
 					&& sidePiece.MoveCount == 0
 					&& sidePiece.Team == kingPiece.Team) {
-                    resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, -1));
-                }
+					resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, -1));
+				}
 				if (sidePiece != Piece.NULL_PIECE) {
 					break;
 				}
@@ -40,11 +40,11 @@ namespace DChess.Chess.Variants {
 			for (int x = xPos + 1; x < board.Size.x; x++) { 
 				var sidePiece = board.GetPiece(new Vector2Int(x, position.y));
 
-                if (sidePiece.Type == PieceType.Rook
+				if (sidePiece.Type == PieceType.Rook
 					&& sidePiece.MoveCount == 0
 					&& sidePiece.Team == kingPiece.Team) {
-                    resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, 1));
-                }
+					resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, 1));
+				}
 				if (sidePiece != Piece.NULL_PIECE) {
 					break;
 				}
@@ -55,22 +55,22 @@ namespace DChess.Chess.Variants {
 
 		private Move castlingMove(Vector2Int position, Board board, Piece kingPiece, Piece sidePiece, int x, int direction)
 		{
-            Vector2Int castlingResultPosition = new(position.x + direction * castlingDistance, position.y);
-            Vector2Int originalRookPosition = new(x, position.y);
+			Vector2Int castlingResultPosition = new(position.x + direction * castlingDistance, position.y);
+			Vector2Int originalRookPosition = new(x, position.y);
 			Vector2Int newRookPosition = new(position.x + direction, position.y);
 
-            Move castlingMove = new();
-            // Remove King.
-            castlingMove.AddChange(new BoardChange(position, kingPiece, Piece.NULL_PIECE));
-            // Remove Rook.
-            castlingMove.AddChange(new BoardChange(originalRookPosition, sidePiece, Piece.NULL_PIECE));
-            // Place King.
-            castlingMove.AddChange(new BoardChange(castlingResultPosition, Piece.NULL_PIECE, kingPiece));
-            // Place Rook
-            castlingMove.AddChange(new BoardChange(newRookPosition, Piece.NULL_PIECE, sidePiece));
+			Move castlingMove = new();
+			// Remove King.
+			castlingMove.AddChange(new BoardChange(position, kingPiece, Piece.NULL_PIECE));
+			// Remove Rook.
+			castlingMove.AddChange(new BoardChange(originalRookPosition, sidePiece, Piece.NULL_PIECE));
+			// Place King.
+			castlingMove.AddChange(new BoardChange(castlingResultPosition, Piece.NULL_PIECE, kingPiece));
+			// Place Rook
+			castlingMove.AddChange(new BoardChange(newRookPosition, Piece.NULL_PIECE, sidePiece));
 
 			return castlingMove;
-        }
+		}
 
 	}
 }
