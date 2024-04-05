@@ -2,6 +2,7 @@
 using DChess.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 
 namespace DChess.Chess.Playground
@@ -9,11 +10,6 @@ namespace DChess.Chess.Playground
 	public class Move
 	{
 		public readonly List<BoardChange> Changes = new();
-
-		public Move()
-		{
-
-		}
 
 		public void AddChange(BoardChange change)
 		{
@@ -39,15 +35,15 @@ namespace DChess.Chess.Playground
 
 		public void Undo(Board board)
 		{
-			foreach (var change in Changes)
+			foreach (var change in Changes.Reverse<BoardChange>())
 			{
 				board.PlacePiece(change.boardPosition, change.oldPiece);
 
-                if (change.newPiece == Piece.NULL_PIECE)
-                {
-                    change.oldPiece.MoveCount -= 1;
-                }
-            }
+				if (change.newPiece == Piece.NULL_PIECE)
+				{
+					change.oldPiece.MoveCount -= 1;
+				}
+			}
 		}
 
 		public float AttackScore()

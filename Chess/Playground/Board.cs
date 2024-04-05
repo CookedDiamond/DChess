@@ -20,14 +20,15 @@ namespace DChess.Chess.Playground {
 
 		// TODO: Remove Dictionary -> performance
 		public readonly Dictionary<Vector2Int, Piece> Pieces = new();
+
 		public SquareType[,] SquareMap;
 		public Vector2Int Size { get; set; }
 		public bool IsWhitesTurn => _moveHistory.Count % 2 == (START_TEAM == TeamType.White ? 0 : 1);
-        public List<Variant> Variants { get; set; }
+		public List<Variant> Variants { get; set; }
 
-        private readonly List<Move> _moveHistory = new();
+		private readonly List<Move> _moveHistory = new();
 
-        public Board(Vector2Int size) {
+		public Board(Vector2Int size) {
 			Size = size;
 			Variants = new List<Variant>();
 			SquareMap = new SquareType[size.x, size.y];
@@ -50,26 +51,35 @@ namespace DChess.Chess.Playground {
 			return new Vector2(Size.x / 2f, Size.y / 2f);
 		}
 
-		public bool MakeMove(Move move) {
+		public bool MakeMove(Move move, bool doAfterTurnUpdate = true) {
 			move.Apply(this);
-
-			afterTurnUpdate(move);
+			_moveHistory.Add(move);
+			if (doAfterTurnUpdate) {
+				afterTurnUpdate(move);
+			}
 			return true;
 		}
 
-		public void UndoLastMove()
-		{
+		public void UndoLastMove() {
+			if (_moveHistory.Count <= 0) return;
 			var lastMove = GetLastMove();
 
-            lastMove.Undo(this);
-            _moveHistory.Remove(lastMove);
-        }
+			lastMove.Undo(this);
+			_moveHistory.Remove(lastMove);
+		}
+
+		public void AddToLastMove(List<BoardChange> additionalChanges) {
+			Move lastMove = GetLastMove();
+			UndoLastMove();
+			foreach (var change in additionalChanges) {
+				lastMove.AddChange(change);
+			}
+			MakeMove(lastMove, false);
+		}
 
 		private void afterTurnUpdate(Move lastMove) {
-			_moveHistory.Add(lastMove);
-
 			foreach (var variant in Variants) {
-				variant.AfterTurnUpdate(this);
+				variant.AfterTurnUpdate(this, lastMove);
 			}
 		}
 
@@ -98,7 +108,7 @@ namespace DChess.Chess.Playground {
 			return Pieces;
 		}
 
-		public List<KeyValuePair<Vector2Int, Piece>> GetAllPiecesFromTeam (TeamType teamType) {
+		public List<KeyValuePair<Vector2Int, Piece>> GetAllPiecesFromTeam(TeamType teamType) {
 			List<KeyValuePair<Vector2Int, Piece>> result = new();
 			foreach (var keyValuePair in Pieces) {
 				if (keyValuePair.Value.Team == teamType) {
@@ -211,7 +221,7 @@ namespace DChess.Chess.Playground {
 			string result = "";
 			for (int y = 0; y < Size.y; y++) {
 				for (int x = 0; x < Size.x; x++) {
-					Vector2Int position = new (x, y);
+					Vector2Int position = new(x, y);
 					if (GetPiece(position) == Piece.NULL_PIECE) {
 						result += ".";
 					}

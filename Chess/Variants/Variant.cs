@@ -11,7 +11,7 @@ namespace DChess.Chess.Variants
 			return normalResult;
 		}
 
-		public virtual void AfterTurnUpdate(Board board) {
+		public virtual void AfterTurnUpdate(Board board, Move move) {
 
 		}
 

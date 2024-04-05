@@ -16,8 +16,7 @@ namespace DChess.Chess.Variants
 			_decreasingStrenth = decreasingStrenth;
 		}
 
-		public override void AfterTurnUpdate(Board board) {
-			base.AfterTurnUpdate(board);
+		public override void AfterTurnUpdate(Board board, Move move) {
 			var offset = board.GetCenter();
 			float halfSize = Math.Max(offset.X, offset.Y);
 			float outsideCornerDistance = (float) Math.Sqrt(halfSize * halfSize * 2f);

@@ -6,22 +6,20 @@
 ---------------------------------------------------------------------------------------------------
 
 
-- Castling
-- add is check to Move and to AttackScore()
-- find solution so battle royale can be undone (should be possible with new move system so multiple changes can be done)
-- InputHandler 
+- fix undo battle royale (should be possible with new move system so multiple changes can be done)
 - Undo possible with computer player enemy
+- InputHandler 
 
 - null piece so no more piece != null checks, store no null pieces though
-- generalisation of promoting on the last square
 - fix flipping im to down rn sowwy :(
-- load position from input file
-- Ingame setup positions easier
+- setup custom positions ingame
 - (LONG) play automatically vs different bot versions.
-- fix online
+- (LONG?) fix online
+- Implement visual queue for disapearing squares -> Mines etc.
+- Implement undo with battle royale
 
 ? En passant
-? Implement visual queue for disapearing squares -> Mines etc.
+
 
 (- use async read and other async methods instead of while(true) with threads)
 	- close the 'while true threads' with windows "x"
