@@ -48,7 +48,8 @@ namespace DChess.Util {
 			=> a.x != b.x || a.y != b.y;
 
 		public override string ToString() {
-			return $"({x},{y})";
+			char xPos = (char)(x + 0x61);
+			return $"({xPos},{y + 1})";
 		}
 
 		public override bool Equals(object obj) {

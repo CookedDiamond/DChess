@@ -8,31 +8,32 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
+using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
 
-namespace DChess
-{
-    public class Game1 : Game {
+namespace DChess {
+	public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
 		private static ScalingUtil _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
-		// Mouse variables TODO: make Inputhandler Class
-		private bool _lastMouseStateWasPressed = false;
-		private const int keyInputDelay = 30;
-		private int lastKeyInput = 0;
-
 		private readonly BoardManager _boardManager;
-
-		public static SpriteFont Font { get; private set; }
+		private readonly int _smokeTestFrames;
+		private int _framesDrawn;
+		private readonly InputHandler _inputHandler;
 
 		private Scene _menuScene;
 		private Scene _boardScene;
 		private Scene _activeScene;
+
+		public static SpriteFont Font { get; private set; }
 		public SceneType ActiveSceneType { get; private set; }
 
-		public Game1(BoardManager boardManager) {
+		public Game1(BoardManager boardManager, int smokeTestFrames = 0) {
 			_boardManager = boardManager;
+			_smokeTestFrames = smokeTestFrames;
+			_inputHandler = new InputHandler();
 
 			_graphics = new GraphicsDeviceManager(this);
 			_gameScaling = new ScalingUtil(boardManager.Board, this, _graphics);
@@ -64,48 +65,24 @@ namespace DChess
 		}
 
 		protected override void Update(GameTime gameTime) {
-			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-				Exit();
-
-			if (_boardManager.GetComputerPlayerTeamType() != null && _boardManager.GetComputerPlayerTeamType() == _boardManager.Board.GetTurnTeamType()) {
-				_boardManager.Board.MakeComputerMove();
+			_boardManager.BoardNetworking.ChessClient?.ApplyPendingMoves();
+			if (Keyboard.GetState().IsKeyDown(Keys.Escape)) Exit();
+			// Computer move
+			if (_boardManager.GetComputerPlayerTeamType() != null
+				&& _boardManager.GetComputerPlayerTeamType() == _boardManager.Board.GetTurnTeamType()) {
+				_boardManager.MakeComputerMove();
 			}
 
 			_gameScaling.Update();
 
-			// Mouse Inputs.
-			var mouseState = Mouse.GetState();
-			var mousePos = new Vector2Int(mouseState.X, mouseState.Y);
-			_activeScene.MouseHover(mousePos);
-			if (_lastMouseStateWasPressed && mouseState.LeftButton == ButtonState.Released) {
-				_activeScene.MouseClick(mousePos);
-			}
+			_inputHandler.HandleInputs(Mouse.GetState(), _activeScene, _boardManager);
 
-			if (mouseState.LeftButton == ButtonState.Pressed) {
-				_lastMouseStateWasPressed = true;
-			}
-			else {
-				_lastMouseStateWasPressed = false;
-			}
+			base.Update(gameTime);
+		}
 
-			// Key Inputs.
-			lastKeyInput++;
-			KeyboardState keyState = Keyboard.GetState();
-			if (keyState.IsKeyDown(Keys.A) && keyInputDelay <= lastKeyInput) {
-				_boardManager.Board.MakeComputerMove();
-				lastKeyInput = 0;
-			}
-			if (keyState.IsKeyDown(Keys.S) && keyInputDelay <= lastKeyInput) {
-				Debug.WriteLine($"Current Eval: {_boardManager.Board.GetEvaluaton()}");
-				lastKeyInput = 0;
-			}
-            if (keyState.IsKeyDown(Keys.D) && keyInputDelay <= lastKeyInput)
-            {
-				_boardManager.Board.UndoLastMove();
-                lastKeyInput = 0;
-            }
-
-            base.Update(gameTime);
+		protected override void OnExiting(object sender, ExitingEventArgs args) {
+			_boardManager.BoardNetworking.ChessClient?.Dispose();
+			base.OnExiting(sender, args);
 		}
 
 		public void SwitchScene(SceneType scene) {
@@ -116,6 +93,8 @@ namespace DChess
 				case SceneType.Menu:
 					_activeScene = _menuScene;
 					break;
+				case SceneType.None:
+					throw new NotImplementedException();
 				default:
 					throw new NotImplementedException();
 			}
@@ -134,6 +113,7 @@ namespace DChess
 			SpriteBatch.End();
 
 			base.Draw(gameTime);
+			if (_smokeTestFrames > 0 && ++_framesDrawn >= _smokeTestFrames) Exit();
 		}
 	}
 

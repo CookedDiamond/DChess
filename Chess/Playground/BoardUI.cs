@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,6 +51,7 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void SelectSquare(SquareUI squareUI) {
+			if (_board.HasTeamWon() != TeamType.None) return;
 			Piece piece = _board.GetPiece(squareUI.Position);
 			if (_selectedSquare == null
 				&& piece != null
@@ -62,13 +64,18 @@ namespace DChess.Chess.Playground {
 				var pos1 = _selectedSquare.Position;
 				var pos2 = squareUI.Position;
 				var newPiece = _board.GetPiece(pos1);
-				var move = new Move();
-				move.AddChange(pos1, newPiece, Piece.NULL_PIECE);
-				move.AddChange(pos2, piece, newPiece);
-				_boardManager.MakeMove(move);
-				_legalMovesWithSelected = new List<Vector2Int>();
-				_selectedSquare = null;
-			}
+				var move = newPiece.Team == _board.GetTurnTeamType() ? newPiece.GetMove(pos1, pos2) : null;
+				if (move != null)
+				{
+					_boardManager.MakeMove(move);
+				}
+				else
+				{
+					Debug.WriteLine("Reset selection.");
+                }
+                _legalMovesWithSelected = new List<Vector2Int>();
+                _selectedSquare = null;
+            }
 		}
 
 

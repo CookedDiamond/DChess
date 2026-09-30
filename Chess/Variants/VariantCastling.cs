@@ -3,63 +3,76 @@ using DChess.Chess.Playground;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DChess.Chess.Variants {
-    /// <summary>
-    /// Castling. Detection is position-based, not history-based: castling is
-    /// allowed whenever the king sits on its home square, a same-team rook
-    /// sits on the corner, and every square between them is empty.
-    ///
-    /// This is intentional — the engine supports UndoLastMove and we want
-    /// "move king, undo, castle" to actually work. A history-based "king
-    /// has ever moved" flag would survive the undo and forbid castling
-    /// from a position where the king hasn't moved on the live board.
-    ///
-    /// Note: there is no check / pass-through-check rule because the engine
-    /// has no check detection at all (game ends only on king capture).
-    /// </summary>
-    public class VariantCastling : Variant {
+	public class VariantCastling: Variant {
+		private readonly int castlingDistance;
 
-        public override List<Move> AdditionalMoves(Board board, Piece piece, Vector2Int position) {
-            if (piece.Type != PieceType.King) return null;
+		public VariantCastling(int castlingDistance = 2)
+		{
+			if (castlingDistance < 2) throw new ArgumentOutOfRangeException(nameof(castlingDistance));
+			this.castlingDistance = castlingDistance;
+		}
 
-            int homeY = piece.Team == TeamType.White ? 0 : board.Size.y - 1;
-            int kingHomeX = board.Size.x - 4; // matches BoardManager.Build8x8StandardBoard
-            if (position.y != homeY || position.x != kingHomeX) return null;
+		public override List<Move> AdditionalMoves(Board board, Piece kingPiece, Vector2Int position) {
+			if (kingPiece.Type != PieceType.King) return null;
+			if (kingPiece.MoveCount > 0) return null;
+			List<Move> resultMoves = new ();
+			int xPos = position.x;
 
-            var moves = new List<Move>();
-            // Kingside: rook on the right edge.
-            tryAddCastle(board, piece, position, homeY, board.Size.x - 1, kingHomeX + 2, kingHomeX + 1, moves);
-            // Queenside: rook on x=0.
-            tryAddCastle(board, piece, position, homeY,                0, kingHomeX - 2, kingHomeX - 1, moves);
-            return moves;
-        }
+			// - direction
+			for (int x = xPos - 1; x >= 0; x--) {
+				if (!board.IsValidPosition(new Vector2Int(x, position.y))) break;
+				var sidePiece = board.GetPiece(new Vector2Int(x, position.y));
 
-        private static void tryAddCastle(Board board, Piece king, Vector2Int kingPos, int homeY,
-                                         int rookX, int kingDestX, int rookDestX, List<Move> outMoves) {
-            var rookPos = new Vector2Int(rookX, homeY);
-            if (!board.IsValidPosition(rookPos)) return;
+				if (sidePiece.Type == PieceType.Rook
+					&& sidePiece.MoveCount == 0
+					&& sidePiece.Team == kingPiece.Team && x < xPos - castlingDistance) {
+					resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, -1));
+				}
+				if (sidePiece != Piece.NULL_PIECE) {
+					break;
+				}
+			}
+			// + direction
+			for (int x = xPos + 1; x < board.Size.x; x++) {
+				if (!board.IsValidPosition(new Vector2Int(x, position.y))) break;
+				var sidePiece = board.GetPiece(new Vector2Int(x, position.y));
 
-            var rook = board.GetPiece(rookPos);
-            if (rook == Piece.NULL_PIECE) return;
-            if (rook.Type != PieceType.Rook) return;
-            if (rook.Team != king.Team) return;
+				if (sidePiece.Type == PieceType.Rook
+					&& sidePiece.MoveCount == 0
+					&& sidePiece.Team == kingPiece.Team && x > xPos + castlingDistance) {
+					resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, 1));
+				}
+				if (sidePiece != Piece.NULL_PIECE) {
+					break;
+				}
+			}
 
-            // Every square strictly between king and rook must be empty.
-            int min = Math.Min(kingPos.x, rookX) + 1;
-            int max = Math.Max(kingPos.x, rookX) - 1;
-            for (int x = min; x <= max; x++) {
-                if (board.GetPiece(new Vector2Int(x, homeY)) != Piece.NULL_PIECE) return;
-            }
+			return resultMoves;
+		}
 
-            var move = new Move();
-            // Order matters for Move.Apply when source == dest of another change,
-            // but here all four squares are distinct, so any order is fine.
-            move.AddChange(kingPos,                              king,            Piece.NULL_PIECE);
-            move.AddChange(new Vector2Int(kingDestX, homeY),     Piece.NULL_PIECE, king);
-            move.AddChange(rookPos,                              rook,            Piece.NULL_PIECE);
-            move.AddChange(new Vector2Int(rookDestX, homeY),     Piece.NULL_PIECE, rook);
-            outMoves.Add(move);
-        }
-    }
+		private Move castlingMove(Vector2Int position, Board board, Piece kingPiece, Piece sidePiece, int x, int direction)
+		{
+			Vector2Int castlingResultPosition = new(position.x + direction * castlingDistance, position.y);
+			Vector2Int originalRookPosition = new(x, position.y);
+			Vector2Int newRookPosition = new(position.x + direction, position.y);
+
+			Move castlingMove = new();
+			// Remove King.
+			castlingMove.AddChange(new BoardChange(position, kingPiece, Piece.NULL_PIECE));
+			// Remove Rook.
+			castlingMove.AddChange(new BoardChange(originalRookPosition, sidePiece, Piece.NULL_PIECE));
+			// Place King.
+			castlingMove.AddChange(new BoardChange(castlingResultPosition, Piece.NULL_PIECE, kingPiece));
+			// Place Rook
+			castlingMove.AddChange(new BoardChange(newRookPosition, Piece.NULL_PIECE, sidePiece));
+
+			return castlingMove;
+		}
+
+	}
 }

@@ -31,6 +31,13 @@ namespace DChess.Cli {
         };
 
         public CliRunner(List<string> variants, string preset, int boardSize) {
+            if (boardSize < 4 || boardSize > 26) throw new ArgumentOutOfRangeException(nameof(boardSize), "Board size must be between 4 and 26.");
+            if (!preset.Equals("small", StringComparison.OrdinalIgnoreCase) && !preset.Equals("standard", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Preset must be standard or small.", nameof(preset));
+            if (preset.Equals("standard", StringComparison.OrdinalIgnoreCase) && boardSize != 8)
+                throw new ArgumentException("The standard preset requires an 8x8 board; use --preset small for other sizes.");
+            foreach (var variant in variants)
+                if (!VariantFactory.ContainsKey(variant)) throw new ArgumentException($"Unknown variant '{variant}'.");
             _initialVariants = variants;
             _preset = preset;
             _boardSize = boardSize;
@@ -38,6 +45,15 @@ namespace DChess.Cli {
         }
 
         public static int Run(string[] args) {
+            try {
+                return RunCore(args);
+            } catch (Exception ex) when (ex is ArgumentException || ex is FormatException || ex is OverflowException) {
+                Console.Error.WriteLine("error: " + ex.Message);
+                return 1;
+            }
+        }
+
+        private static int RunCore(string[] args) {
             var variants = new List<string> { "promotion" };
             string preset = "standard";
             int size = 8;
@@ -45,21 +61,26 @@ namespace DChess.Cli {
             for (int i = 0; i < args.Length; i++) {
                 switch (args[i]) {
                     case "--variant":
-                        if (i + 1 < args.Length) variants.Add(args[++i]);
+                        if (i + 1 >= args.Length) throw new ArgumentException("--variant requires a name.");
+                        variants.Add(args[++i]);
                         break;
                     case "--no-default-variants":
                         variants.Clear();
                         break;
                     case "--preset":
-                        if (i + 1 < args.Length) preset = args[++i];
+                        if (i + 1 >= args.Length) throw new ArgumentException("--preset requires a name.");
+                        preset = args[++i];
                         break;
                     case "--size":
-                        if (i + 1 < args.Length) size = int.Parse(args[++i]);
+                        if (i + 1 >= args.Length) throw new ArgumentException("--size requires a number.");
+                        size = int.Parse(args[++i]);
                         break;
                     case "--help":
                     case "-h":
                         PrintCliUsage();
                         return 0;
+                    default:
+                        throw new ArgumentException($"Unknown option '{args[i]}'.");
                 }
             }
 
@@ -91,7 +112,6 @@ namespace DChess.Cli {
             _manager = new BoardManager(_board, new BoardNetworking());
             if (_preset.Equals("small", StringComparison.OrdinalIgnoreCase)) _manager.BuildSmallBoard();
             else _manager.Build8x8StandardBoard();
-            _board.LastEval = new Evaluation(_board).GetEvaluation();
         }
 
         private void Loop() {
@@ -180,7 +200,7 @@ namespace DChess.Cli {
             int sx = _board.Size.x, sy = _board.Size.y;
             // Top: rank labels first, with y=size-1 at top.
             for (int y = sy - 1; y >= 0; y--) {
-                Console.Write($"{y,2} ");
+                Console.Write($"{y + 1,2} ");
                 for (int x = 0; x < sx; x++) {
                     var pos = new Vector2Int(x, y);
                     if (!_board.IsValidPosition(pos)) { Console.Write(" #"); continue; }
@@ -248,7 +268,7 @@ namespace DChess.Cli {
         private void DoAi() {
             if (_board.HasTeamWon() != TeamType.None) { Console.WriteLine("game is over"); return; }
             Console.WriteLine("thinking...");
-            _board.MakeComputerMove();
+            _manager.MakeComputerMove(false);
             PrintBoard();
         }
 
@@ -330,8 +350,15 @@ namespace DChess.Cli {
         }
 
         private Vector2Int ParseSquare(string s) {
+            var position = ParseCoordinates(s);
+            if (!_board.IsValidPosition(position)) throw new FormatException($"Square '{s}' is outside the playable board.");
+            return position;
+        }
+
+        private static Vector2Int ParseCoordinates(string s) {
             if (s.Contains(',')) {
                 var bits = s.Split(',');
+                if (bits.Length != 2) throw new FormatException($"can't parse square '{s}'");
                 return new Vector2Int(int.Parse(bits[0]), int.Parse(bits[1]));
             }
             // Algebraic: file letter + rank number (1-indexed).

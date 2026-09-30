@@ -1,61 +1,63 @@
-﻿using DChess.Chess.Playground;
+using DChess.Chess.Playground;
 using DChess.Server;
-using DChess.Util;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace DChess.Multiplayer
-{
-    public class ChessClient {
+namespace DChess.Multiplayer {
+    public class ChessClient : IDisposable {
+        private readonly Board _board;
+        private readonly ConcurrentQueue<byte[]> _receivedMoves = new();
+        private TcpClient _tcpClient;
 
-		private Board _board;
-		private TcpClient _tcpClient;
+        public ChessClient(Board board, string server = "127.0.0.1", int port = 13000) {
+            _board = board;
+            try {
+                _tcpClient = new TcpClient(server, port);
+                new Thread(ReadMoves) { IsBackground = true }.Start();
+            } catch (SocketException ex) {
+                Debug.WriteLine("Could not connect: " + ex.Message);
+                Dispose();
+            }
+        }
 
-		public ChessClient(Board board) {
-			_board = board;
-			Connect(ChessServer.IP_ADRESS);
-		}
+        private void ReadMoves() {
+            try {
+                var stream = _tcpClient.GetStream();
+                while (true) {
+                    var data = new byte[ByteConverter.MOVE_LENGTH];
+                    stream.ReadExactly(data);
+                    _receivedMoves.Enqueue(data);
+                }
+            } catch (Exception ex) when (ex is IOException || ex is SocketException || ex is ObjectDisposedException) {
+                Debug.WriteLine("Closed client connection: " + ex.Message);
+            } finally {
+                Dispose();
+            }
+        }
 
-		private void Connect(string server) {
-			try {
+        // Called by the game thread to avoid mutating the board while it is drawn.
+        public void ApplyPendingMoves() {
+            while (_receivedMoves.TryDequeue(out var data)) {
+                var move = ByteConverter.ToMove(data, _board);
+                if (move != null) _board.MakeMove(move);
+            }
+        }
 
-				TcpClient client = new(server, ChessServer.PORT);
-				_tcpClient = client;
+        public void SendMove(Move move) {
+            if (_tcpClient == null || !_tcpClient.Connected) return;
+            try {
+                var data = ByteConverter.ToBytes(move);
+                lock (_tcpClient) _tcpClient.GetStream().Write(data);
+            } catch (Exception ex) when (ex is IOException || ex is SocketException || ex is ObjectDisposedException) {
+                Debug.WriteLine("Could not send move: " + ex.Message);
+                Dispose();
+            }
+        }
 
-				new Thread(() => ReadMoves(client, _board)).Start();
-
-			}
-			catch  {
-				Debug.WriteLine("Closed client connection.");
-				_tcpClient.Dispose();
-			}
-		}
-
-		private static void ReadMoves(TcpClient client, Board board) {
-			while (true) {
-				var data = new byte[256];
-				NetworkStream stream = client.GetStream();
-				stream.Read(data, 0, data.Length);
-				Move resultMove = ByteConverter.ToMove(data);
-				Debug.WriteLine($"Received: {resultMove}");
-				board.MakeMove(resultMove);
-			}
-		}
-
-		public void SendMove(Move move) {
-			byte[] data = ByteConverter.ToBytes(move);
-
-			NetworkStream stream = _tcpClient.GetStream();
-
-			// Send the message to the connected TcpServer.
-			stream.Write(data, 0, data.Length);
-			Debug.WriteLine($"Sent: {move}");
-		}
-	}
+        public void Dispose() => _tcpClient?.Dispose();
+    }
 }

@@ -5,23 +5,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DChess.Chess.Variants
-{
-    public class VariantPawnQueenPromotion : Variant {
+namespace DChess.Chess.Variants {
+	public class VariantPawnQueenPromotion : Variant {
 
-		public override void AfterTurnUpdate(Board board) {
-			List<Vector2Int> promotionPositions = new();
-			for (int i = 0; i < board.Size.x; i++) {
-				promotionPositions.Add(new Vector2Int(i, 0));
-				promotionPositions.Add(new Vector2Int(i, board.Size.y - 1));
-			}
-
-			foreach (var position in promotionPositions) {
-				var piece = board.GetPiece(position);
-				if (piece.Type == PieceType.Pawn) {
-					board.PlacePiece(position, new PieceQueen(piece.Team, board));
+		public override void AfterTurnUpdate(Board board, Move move) {
+			foreach (var change in move.Changes) {
+				if (change.newPiece.Type == PieceType.Pawn) {
+					tryToPromotePawn(change.newPiece, change.boardPosition, board);
+					break;
 				}
 			}
+		}
+
+		private void tryToPromotePawn(Piece pawn, Vector2Int pawnPosition, Board board) {
+			List<BoardChange> changes = new();
+			TeamType team = pawn.Team;
+			Vector2Int direction = Board.GetTeamDirection(team);
+			Vector2Int nextSquare = pawnPosition + direction;
+			if (board.IsValidPosition(nextSquare)) return;
+
+			changes.Add(new BoardChange(pawnPosition, pawn, new PieceQueen(team, board)));
+
+			board.AddToLastMove(changes);
 		}
 	}
 }

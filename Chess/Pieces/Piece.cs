@@ -1,15 +1,11 @@
-﻿using DChess.Chess.Playground;
+using DChess.Chess.Playground;
 using DChess.Util;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DChess.Chess.Pieces
-{
-    public abstract class Piece {
+namespace DChess.Chess.Pieces {
+	public abstract class Piece {
 
 		public static readonly Piece NULL_PIECE = new PieceNull();
 
@@ -17,12 +13,16 @@ namespace DChess.Chess.Pieces
 
 		public TeamType Team { get; set; }
 
+		public int MoveCount { get; set; }
+
 		protected readonly Board _board;
+		internal Board Owner => _board;
 
 		public Piece(PieceType type, TeamType team, Board board) {
 			Type = type;
 			Team = team;
 			_board = board;
+			MoveCount = 0;
 		}
 
 		public virtual List<Move> GetAllLegalMoves(Vector2Int fromPosition) {
@@ -35,6 +35,30 @@ namespace DChess.Chess.Pieces
 			}
 
 			return moves;
+		}
+
+		public virtual Move GetMove(Vector2Int fromPosition, Vector2Int toPosition) {
+			var moves = GetAllLegalMoves(fromPosition);
+			foreach (var move in moves) {
+				bool containsFromPos = false;
+				bool containsToPos = false;
+
+				foreach (var change in move.Changes)
+				{
+					if (change.boardPosition == toPosition && change.newPiece == this) {
+						containsToPos = true;
+					}
+					if (change.boardPosition == fromPosition && change.oldPiece == this && change.newPiece == NULL_PIECE) {
+						containsFromPos = true;
+					}
+					if (containsFromPos && containsToPos) {
+						return move;
+					}
+				}
+
+			}
+
+			return null;
 		}
 
 		protected List<Move> getMovesInDirection(Vector2Int fromPosition, Vector2Int direction) {
@@ -132,7 +156,7 @@ namespace DChess.Chess.Pieces
 		}
 
 		public static Piece GetPieceFromType(PieceType type, TeamType team, Board board) {
-			return type switch { 
+			return type switch {
 				PieceType.Pawn => new PiecePawn(team, board),
 				PieceType.Bishop => new PieceBishop(team, board),
 				PieceType.Knight => new PieceKnight(team, board),
@@ -140,8 +164,15 @@ namespace DChess.Chess.Pieces
 				PieceType.Queen => new PieceQueen(team, board),
 				PieceType.King => new PieceKing(team, board),
 				PieceType.None => NULL_PIECE,
-				_ => throw new NotImplementedException()	
+				_ => throw new NotImplementedException()
 			};
+		}
+
+		public Piece ClonePiece(Board board = null) {
+			if (this == NULL_PIECE) return NULL_PIECE;
+			Piece clonedPiece = GetPieceFromType(Type, Team, board ?? _board);
+			clonedPiece.MoveCount = MoveCount;
+			return clonedPiece;
 		}
 	}
 

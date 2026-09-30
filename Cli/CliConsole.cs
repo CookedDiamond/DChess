@@ -31,6 +31,11 @@ namespace DChess.Cli {
             // break the pipes.
             if (inRedirected && outRedirected && errRedirected) return;
 
+            // Open redirected streams before attaching, which replaces native handles.
+            var originalIn = Console.In;
+            var originalOut = Console.Out;
+            var originalError = Console.Error;
+
             if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
                 AllocConsole();
             }
@@ -38,6 +43,9 @@ namespace DChess.Cli {
             // Rebind only the streams that weren't redirected. Redirected ones
             // still point at the original pipe handles (we never touched them).
             try {
+                if (inRedirected) Console.SetIn(originalIn);
+                if (outRedirected) Console.SetOut(originalOut);
+                if (errRedirected) Console.SetError(originalError);
                 if (!outRedirected) {
                     var stdout = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };
                     Console.SetOut(stdout);

@@ -1,0 +1,15 @@
+no attack sort:
+32k
+42k
+33k
+42k
+
+with attack sort:
+42k
+38k
+43k
+33k
+
+20 moves:
+151890
+136989

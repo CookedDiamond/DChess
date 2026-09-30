@@ -20,22 +20,23 @@ namespace DChess.Chess.Playground {
 
 		// TODO: Remove Dictionary -> performance
 		public readonly Dictionary<Vector2Int, Piece> Pieces = new();
+
 		public SquareType[,] SquareMap;
 		public Vector2Int Size { get; set; }
 		public bool IsWhitesTurn => _moveHistory.Count % 2 == (START_TEAM == TeamType.White ? 0 : 1);
-        public float LastEval = 0;
-        public List<Variant> Variants { get; set; }
+		public List<Variant> Variants { get; set; }
 
-        private readonly List<Move> _moveHistory = new();
+		private readonly List<Move> _moveHistory = new();
 
-        public Board(Vector2Int size) {
+		public Board(Vector2Int size) {
 			Size = size;
 			Variants = new List<Variant>();
 			SquareMap = new SquareType[size.x, size.y];
 		}
 
 		public void PlacePiece(Vector2Int position, Piece piece) {
-			Pieces[position] = piece;
+			if (piece == Piece.NULL_PIECE) Pieces.Remove(position);
+			else Pieces[position] = piece;
 		}
 
 		public bool RemovePiece(Vector2Int position) {
@@ -51,34 +52,45 @@ namespace DChess.Chess.Playground {
 			return new Vector2(Size.x / 2f, Size.y / 2f);
 		}
 
-		public bool MakeMove(Move move) {
+		public bool MakeMove(Move move, bool doAfterTurnUpdate = true) {
+			if (move == null) return false;
+			if (move.Changes.Any(c => c.newPiece != Piece.NULL_PIECE && c.newPiece.Owner != this)) {
+				var pieceMap = new Dictionary<Piece, Piece>();
+				foreach (var change in move.Changes) {
+					if (change.oldPiece != Piece.NULL_PIECE)
+						pieceMap[change.oldPiece] = GetPiece(change.boardPosition);
+				}
+				move = move.CloneForBoard(this, pieceMap);
+			}
 			move.Apply(this);
-
-			afterTurnUpdate(move);
+			_moveHistory.Add(move);
+			if (doAfterTurnUpdate) {
+				afterTurnUpdate(move);
+			}
 			return true;
 		}
 
-		public void UndoLastMove()
-		{
+		public void UndoLastMove() {
+			if (_moveHistory.Count <= 0) return;
 			var lastMove = GetLastMove();
 
-            lastMove.Undo(this);
-            _moveHistory.Remove(lastMove);
-        }
-
-		private void afterTurnUpdate(Move lastMove) {
-			_moveHistory.Add(lastMove);
-
-			foreach (var variant in Variants) {
-				variant.AfterTurnUpdate(this);
-			}
+			lastMove.Undo(this);
+			_moveHistory.Remove(lastMove);
 		}
 
-		public void MakeComputerMove() {
-			if (HasTeamWon() != TeamType.None) return;
-			var algo = new MinMaxRecursive(LastEval);
-			var move = algo.GetBestMove(this, out LastEval);
-			MakeMove(move);
+		public void AddToLastMove(List<BoardChange> additionalChanges) {
+			Move lastMove = GetLastMove();
+			UndoLastMove();
+			foreach (var change in additionalChanges) {
+				lastMove.AddChange(change);
+			}
+			MakeMove(lastMove, false);
+		}
+
+		private void afterTurnUpdate(Move lastMove) {
+			foreach (var variant in Variants) {
+				variant.AfterTurnUpdate(this, lastMove);
+			}
 		}
 
 		public TeamType GetTurnTeamType() {
@@ -99,7 +111,7 @@ namespace DChess.Chess.Playground {
 			return Pieces;
 		}
 
-		public List<KeyValuePair<Vector2Int, Piece>> GetAllPiecesFromTeam (TeamType teamType) {
+		public List<KeyValuePair<Vector2Int, Piece>> GetAllPiecesFromTeam(TeamType teamType) {
 			List<KeyValuePair<Vector2Int, Piece>> result = new();
 			foreach (var keyValuePair in Pieces) {
 				if (keyValuePair.Value.Team == teamType) {
@@ -176,7 +188,8 @@ namespace DChess.Chess.Playground {
 		}
 
 		public Board CloneBoard() {
-			Board returnBoard = new(Size);
+			Board returnBoard = new (Size);
+			var pieceMap = new Dictionary<Piece, Piece>();
 
 			for (int x = 0; x < Size.x; x++) {
 				for (int y = 0; y < Size.y; y++) {
@@ -186,11 +199,13 @@ namespace DChess.Chess.Playground {
 
 			foreach (var pair in Pieces) {
 				var oldPiece = pair.Value;
-				returnBoard.PlacePiece(pair.Key, Piece.GetPieceFromType(oldPiece.Type, oldPiece.Team, returnBoard));
+				var clonedPiece = oldPiece.ClonePiece(returnBoard);
+				pieceMap[oldPiece] = clonedPiece;
+				returnBoard.PlacePiece(pair.Key, clonedPiece);
 			}
 
 			foreach (var move in _moveHistory) {
-				returnBoard._moveHistory.Add(move);
+				returnBoard._moveHistory.Add(move.CloneForBoard(returnBoard, pieceMap));
 			}
 
 			foreach (var variant in Variants) {
@@ -212,7 +227,7 @@ namespace DChess.Chess.Playground {
 			string result = "";
 			for (int y = 0; y < Size.y; y++) {
 				for (int x = 0; x < Size.x; x++) {
-					Vector2Int position = new (x, y);
+					Vector2Int position = new(x, y);
 					if (GetPiece(position) == Piece.NULL_PIECE) {
 						result += ".";
 					}

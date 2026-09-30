@@ -1,6 +1,6 @@
 # DChess
 
-Custom chess engine + GUI written in C# / .NET 6 (Windows) on **MonoGame** with a pluggable variant system and a MinMax AI. There is also a **CLI mode** for headless play and automated testing by subagents (see `Cli/` and "Running the CLI" below).
+Custom chess engine + GUI written in C# / .NET 10 (Windows) on **MonoGame** with a pluggable variant system and a MinMax AI. There is also a **CLI mode** for headless play and automated testing by subagents (see `Cli/` and "Running the CLI" below).
 
 ## Build & run
 
@@ -11,7 +11,7 @@ dotnet run -- cli               # launches the text-based CLI (no window)
 dotnet run -- cli --variant friendlyfire --variant promotion
 ```
 
-`TargetFramework = net6.0-windows`, `OutputType = WinExe`, `UseWindowsForms = true`. Windows-only because of MonoGame.WindowsDX. Console I/O still works when launched from a terminal via `dotnet run`.
+`TargetFramework = net10.0-windows`, `OutputType = WinExe`, `UseWindowsForms = true`. Windows-only because of MonoGame.WindowsDX. Console I/O still works when launched from a terminal via `dotnet run`.
 
 ## Top-level layout
 
@@ -22,7 +22,7 @@ Cli/                       headless console UI (added for agent testing)
 Chess/
   Playground/              Board, Move, BoardChange, BoardManager, BoardUI/Networking
   Pieces/                  Piece (abstract) + one file per type (Pawn/Bishop/Knight/Rook/Queen/King/Null)
-  Variants/                Variant (abstract) + variant rules (Promotion, FriendlyFire, BattleRoyale, Castling stub)
+  Variants/                Variant (abstract) + variant rules (Promotion, FriendlyFire, BattleRoyale, Castling)
   ChessAI/                 MinMax search + Evaluation
 UI/                        MonoGame UI primitives + Scenes (Menu, Board)
 Multiplayer/               TCP client/server + ByteConverter
@@ -37,7 +37,7 @@ Content/                   MGCB content (textures, fonts)
   - `Pieces` is a `Dictionary<Vector2Int, Piece>` (sparse — missing key = empty square).
   - `SquareMap[x,y]` marks `Disabled` squares (used by BattleRoyale shrinking board).
   - `IsWhitesTurn` is derived from `_moveHistory.Count` (no separate turn flag).
-  - `MakeMove(Move)` applies the move, then runs every `Variant.AfterTurnUpdate(board)`.
+  - `MakeMove(Move)` applies the move, then runs every `Variant.AfterTurnUpdate(board, move)`.
   - `UndoLastMove()` reverses via `Move.Undo`.
   - `CloneBoard()` deep-copies (used heavily by the AI).
   - Coordinates: **`x` is file (0..size.x-1)**, **`y` is rank**, `y=0` is White's back rank, `y=size-1` is Black's. White moves `+y`. This is *not* standard chess coordinates — there is no a-h/1-8 mapping anywhere; everything is `(x,y)` ints.
@@ -49,20 +49,20 @@ Content/                   MGCB content (textures, fonts)
 
 - **`Variant`** (`Chess/Variants/Variant.cs`) — extension hooks:
   - `AdditionalMoves(board, piece, position)` — append moves (e.g. castling).
-  - `AfterTurnUpdate(board)` — mutate state after each move (e.g. promotion replaces pawns on the back rank; BattleRoyale removes squares).
+  - `AfterTurnUpdate(board, move)` — mutate state after each move (e.g. promotion replaces pawns on the back rank; BattleRoyale removes squares).
   - `IsPieceEnemyTeam(normalResult, piece)` — override friend/foe logic (FriendlyFire makes everything enemy).
   - `Clone()` — must produce an independent copy if the variant has mutable state.
   Active variants live on `Board.Variants` — adding a new variant = new subclass + register on the board.
 
 - **`BoardManager`** wires up board + UI + networking, builds starting positions (`Build8x8StandardBoard`, `BuildSmallBoard`), and routes moves through the network layer.
 
-- **`MinMaxRecursive`** (`Chess/ChessAI/`) — alpha-beta, depth 4 (deeper in endgame), uses board cloning per node. `Evaluation` sums per-piece scores via `Piece.GetPieceScore(board, pos, team)`.
+- **`MinMaxRecursive`** (`Chess/ChessAI/`) — alpha-beta, parallel root searches with depth 3 (deeper in endgame), uses board cloning per node. `Evaluation` sums per-piece scores via `Piece.GetPieceScore(board, pos, team)`.
 
 ## Things to know before editing
 
 - There is **no check / checkmate / stalemate logic** — the game ends only when a king is captured. Don't assume standard FIDE rules.
 - Coordinates are `Vector2Int(x, y)` ints; `y` increases toward Black. The CLI translates to/from algebraic notation but the engine itself doesn't.
-- `Board.ToString()` already produces a text rendering (top of grid is `y=size-1`); the CLI builds on this.
+- `Board.ToString()` already produces a text rendering (starts at `y=0`; the CLI displays `y=size-1` at the top); the CLI builds on this.
 - The MonoGame UI references textures via `TextureLoader` — instantiating `Piece` objects is safe headlessly as long as you don't call `Piece.GetPieceTexture(...)`.
 - `Program.cs` uses top-level statements; keep CLI dispatch there.
 
