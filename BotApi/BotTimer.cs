@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace DChess.BotApi {
 	/// <summary>
@@ -8,6 +9,7 @@ namespace DChess.BotApi {
 	/// </summary>
 	public sealed class BotTimer {
 		private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+		private readonly CancellationToken _cancellation;
 
 		/// <summary>Maximum time for this move in milliseconds.</summary>
 		public int TimeLimitMilliseconds { get; }
@@ -16,12 +18,13 @@ namespace DChess.BotApi {
 		public long ElapsedMilliseconds => _stopwatch.ElapsedMilliseconds;
 
 		/// <summary>Time left for this move.</summary>
-		public long MillisecondsRemaining => Math.Max(0, TimeLimitMilliseconds - ElapsedMilliseconds);
+		public long MillisecondsRemaining => _cancellation.IsCancellationRequested ? 0 : Math.Max(0, TimeLimitMilliseconds - ElapsedMilliseconds);
 
-		public bool IsTimeUp => ElapsedMilliseconds >= TimeLimitMilliseconds;
+		public bool IsTimeUp => _cancellation.IsCancellationRequested || ElapsedMilliseconds >= TimeLimitMilliseconds;
 
-		public BotTimer(int timeLimitMilliseconds) {
+		public BotTimer(int timeLimitMilliseconds, CancellationToken cancellation = default) {
 			TimeLimitMilliseconds = timeLimitMilliseconds;
+			_cancellation = cancellation;
 		}
 	}
 }

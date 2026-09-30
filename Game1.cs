@@ -2,10 +2,12 @@ using DChess.BotApi;
 using DChess.Chess.Arena;
 using DChess.UI.Scenes;
 using DChess.Util;
+using DChess.Persistence;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Threading;
 
 namespace DChess {
 	public class Game1 : Game {
@@ -15,11 +17,16 @@ namespace DChess {
 
 		private readonly int _smokeTestFrames;
 		private int _framesDrawn;
+		private readonly string _smokeTestScene;
 		private readonly InputHandler _inputHandler;
 
 		private Scene _menuScene;
 		private Scene _activeScene;
 		private bool _isResizing;
+		private long _sessionGeneration;
+		public AutosaveStore Autosave { get; }
+		public string SaveStatus => Autosave?.LastError;
+		public bool CanResume => Autosave?.Exists == true;
 
 		public static SpriteFont Font { get; private set; }
 
@@ -29,8 +36,10 @@ namespace DChess {
 		public SceneType ActiveSceneType { get; private set; }
 
 		/// <param name="smokeTestFrames">If greater than 0, the game exits after drawing this many frames ("--smoke-test").</param>
-		public Game1(int smokeTestFrames = 0) {
+		public Game1(int smokeTestFrames = 0, string smokeTestScene = null) {
 			_smokeTestFrames = smokeTestFrames;
+			_smokeTestScene = smokeTestScene;
+			Autosave = smokeTestFrames > 0 ? null : new AutosaveStore();
 			_inputHandler = new InputHandler();
 
 			_graphics = new GraphicsDeviceManager(this);
@@ -38,7 +47,7 @@ namespace DChess {
 
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
-			Exiting += (sender, args) => stopArena();
+			Exiting += (sender, args) => stopSession();
 		}
 
 		protected override void Initialize() {
@@ -86,6 +95,14 @@ namespace DChess {
 
 			_menuScene = new SceneMenu(this);
 			OpenMenu();
+			if (_smokeTestFrames > 0 && _smokeTestScene == "sandbox") {
+				StartSandbox(BotRegistry.Find("MinMaxBot"), 10000);
+				_activeScene.KeyPressed(Keys.A);
+			}
+			if (_smokeTestFrames > 0 && _smokeTestScene == "arena") {
+				StartMatch(new MatchSettings { Player1 = BotRegistry.Find("MinMaxBot"), Player2 = BotRegistry.Human,
+					Games = 1, TimeLimitMilliseconds = 10000 });
+			}
 		}
 
 		protected override void Update(GameTime gameTime) {
@@ -101,24 +118,55 @@ namespace DChess {
 		}
 
 		public void OpenMenu() {
-			stopArena();
+			stopSession();
 			switchScene(_menuScene, SceneType.Menu);
 		}
 
 		/// <summary>Starts a match between two players and shows it.</summary>
 		public void StartMatch(MatchSettings settings) {
-			stopArena();
-			switchScene(new SceneArena(this, settings), SceneType.Arena);
+			stopSession();
+			long generation = Interlocked.Increment(ref _sessionGeneration);
+			switchScene(new SceneArena(this, settings, null, state => saveMatch(state, generation)), SceneType.Arena);
 		}
 
 		/// <summary>Opens a board to play freely, the bot moves when A is pressed.</summary>
 		public void StartSandbox(BotInfo helperBot, int botTimeLimitMilliseconds) {
-			stopArena();
+			stopSession();
+			Interlocked.Increment(ref _sessionGeneration);
 			switchScene(new SceneBoard(this, helperBot, botTimeLimitMilliseconds), SceneType.Board);
+			SaveCurrentSession();
 		}
 
-		private void stopArena() {
+		public void ResumeGame() {
+			var saved = Autosave?.Load();
+			if (saved == null) return;
+			stopSession();
+			long generation = Interlocked.Increment(ref _sessionGeneration);
+			if (saved.Mode == "sandbox") {
+				var bot = saved.HelperBot == null ? null : BotRegistry.Find(saved.HelperBot);
+				switchScene(new SceneBoard(this, bot, saved.BotTimeLimitMilliseconds, saved.Board.Restore(), saved.BotMovePending), SceneType.Board);
+			} else {
+				switchScene(new SceneArena(this, saved.Match.CreateSettings(), saved.Match,
+					state => saveMatch(state, generation)), SceneType.Arena);
+			}
+		}
+
+		private void saveMatch(MatchState state, long generation) {
+			Autosave?.Save(new SessionState { Mode = "match", Match = state },
+				() => generation == Volatile.Read(ref _sessionGeneration));
+		}
+
+		public void SaveCurrentSession() {
+			if (Autosave == null) return;
+			if (_activeScene is SceneBoard board) Autosave.Save(board.CaptureState());
+			if (_activeScene is SceneArena arena) saveMatch(arena.CaptureState(), Volatile.Read(ref _sessionGeneration));
+		}
+
+		private void stopSession() {
+			SaveCurrentSession();
 			(_activeScene as SceneArena)?.Stop();
+			(_activeScene as SceneBoard)?.Stop();
+			Interlocked.Increment(ref _sessionGeneration);
 		}
 
 		private void switchScene(Scene scene, SceneType sceneType) {

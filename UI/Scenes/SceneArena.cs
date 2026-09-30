@@ -3,6 +3,7 @@ using DChess.Chess.Arena;
 using DChess.Chess.Playground;
 using DChess.Extensions;
 using DChess.Util;
+using DChess.Persistence;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -49,10 +50,14 @@ namespace DChess.UI.Scenes {
 		private readonly List<(Rectangle rect, int gameIndex)> _gameRows = new();
 		private readonly List<(Rectangle rect, int ply)> _moveCells = new();
 
-		public SceneArena(Game1 game, MatchSettings settings) {
+		public SceneArena(Game1 game, MatchSettings settings, MatchState resume = null, Action<MatchState> autosave = null) {
 			_game = game;
 			BackGroundColor = Theme.Background;
-			_match = new Match(settings);
+			_match = new Match(settings, resume, autosave);
+			if (resume?.Games.Count > 0) {
+				_gameIndex = resume.Games.Count - 1;
+				_ply = resume.Games[^1].Positions.Count - 1;
+			}
 			_match.Start();
 
 			addButton(() => _controlRects[0], () => "|<", () => goToPly(0));
@@ -71,6 +76,8 @@ namespace DChess.UI.Scenes {
 		public void Stop() {
 			_match.Cancel();
 		}
+
+		public MatchState CaptureState() => _match.CaptureState();
 
 		private ButtonRect addButton(Func<Rectangle> bounds, Func<string> text, Button.OnButtonClicked onClick) {
 			var button = new ButtonRect(bounds, text);
@@ -249,6 +256,8 @@ namespace DChess.UI.Scenes {
 				Move move = _selectedMoves.FirstOrDefault(m => m.To == square.Value);
 				if (move != null) {
 					human.SubmitMove(move);
+					_autoPlay = true;
+					_playTimer = 1;
 					clearSelection();
 					return;
 				}
@@ -282,9 +291,19 @@ namespace DChess.UI.Scenes {
 				_gameIndex = games.Count - 1;
 				game = games[_gameIndex];
 				_ply = game.PositionCount - 1;
+				_autoPlay = true;
 				clearSelection();
 			}
 			_lastPendingBoard = pendingBoard;
+
+			// Human games follow each committed position immediately, including while the bot thinks.
+			if (_autoPlay && _gameIndex == games.Count - 1 && (_match.Settings.Player1.IsHuman || _match.Settings.Player2.IsHuman)
+				&& !games[^1].IsFinished) {
+				_gameIndex = games.Count - 1;
+				game = games[_gameIndex];
+				_ply = game.PositionCount - 1;
+				return;
+			}
 
 			int last = game.PositionCount - 1;
 			_ply = Math.Clamp(_ply, 0, last);

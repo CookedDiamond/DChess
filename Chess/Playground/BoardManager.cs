@@ -22,6 +22,57 @@ namespace DChess.Chess.Playground {
 		private bool unDidLastMove = false;
 		private IChessBot _computerBot;
 		private int _computerTimeLimitMilliseconds = 1000;
+		private Func<IChessBot> _computerBotFactory = () => new MinMaxBot();
+		private bool _replaceComputerBot;
+		private Task<MoveRequestResult> _pendingMove;
+		private CancellationTokenSource _thinkingCancellation;
+		private long _thinkingRevision;
+		public bool IsThinking => _pendingMove != null;
+		public bool HasPendingComputerMove => IsThinking && _thinkingCancellation?.IsCancellationRequested == false;
+		public string BotError { get; private set; }
+		public event Action BoardChanged;
+		public int ComputerTimeLimitMilliseconds => _computerTimeLimitMilliseconds;
+
+		/// <summary>Starts computation on a private position; never waits on the UI thread.</summary>
+		public bool BeginComputerMove(bool automatic = true) {
+			if (IsThinking || (automatic && unDidLastMove) || Board.HasTeamWon() != TeamType.None) return false;
+			if (Board.GetAllLegalMovesForTeam(Board.GetTurnTeamType()).Count == 0) return false;
+			unDidLastMove = false;
+			BotError = null;
+			_computerBot ??= new MinMaxBot();
+			if (_replaceComputerBot && _computerBotFactory != null) _computerBot = _computerBotFactory();
+			_replaceComputerBot = false;
+			var snapshot = Board.CloneBoard();
+			var bot = _computerBot;
+			int limit = _computerTimeLimitMilliseconds;
+			_thinkingRevision = Board.Revision;
+			_thinkingCancellation = new CancellationTokenSource();
+			var token = _thinkingCancellation.Token;
+			_pendingMove = BotRunner.RequestMoveAsync(bot, snapshot, limit, token);
+			return true;
+		}
+
+		/// <summary>Poll on the UI thread; only this thread may commit the computed move.</summary>
+		public void UpdateComputerMove() {
+			if (_pendingMove == null || !_pendingMove.IsCompleted) return;
+			var task = _pendingMove;
+			_pendingMove = null;
+			bool cancelled = _thinkingCancellation.IsCancellationRequested;
+			_thinkingCancellation.Dispose();
+			_thinkingCancellation = null;
+			if (task.IsFaulted) { BotError = task.Exception.GetBaseException().Message; _replaceComputerBot = true; return; }
+			if (cancelled || task.IsCanceled || Board.Revision != _thinkingRevision) { _replaceComputerBot = true; return; }
+			var result = task.Result;
+			BotError = result.Error;
+			if (result.Error != null) _replaceComputerBot = true;
+			if (result.Cancelled || result.Move == null) return;
+			var legalMove = Board.FindEquivalentLegalMove(result.Move);
+			if (legalMove != null) MakeMove(legalMove);
+		}
+
+		public void CancelComputerMove() {
+			_thinkingCancellation?.Cancel();
+		}
 
 		public BoardManager(Board board, BoardNetworking boardNetworking) {
 			Board = board;
@@ -34,14 +85,17 @@ namespace DChess.Chess.Playground {
 		}
 
 		/// <summary>Sets the bot that makes the computer moves.</summary>
-		public void SetComputerBot(IChessBot bot, int timeLimitMilliseconds) {
+		public void SetComputerBot(IChessBot bot, int timeLimitMilliseconds, Func<IChessBot> factory = null) {
+			CancelComputerMove();
 			_computerBot = bot;
+			_computerBotFactory = factory;
 			_computerTimeLimitMilliseconds = timeLimitMilliseconds;
 		}
 
 		public string ComputerBotName => _computerBot?.Name;
 
 		public void MakeComputerMove(bool automatic = true) {
+			if (IsThinking) return;
 			if (automatic && unDidLastMove) return;
 			if (!automatic && unDidLastMove) unDidLastMove = false;
 			if (Board.HasTeamWon() != TeamType.None) return;
@@ -58,8 +112,10 @@ namespace DChess.Chess.Playground {
 
 		public void MakeMove(Move move) {
 			if (Board.MakeMove(move)) {
+				CancelComputerMove();
 				//TODO: fix with online update.
 				BoardNetworking.MakeMove(move);
+				BoardChanged?.Invoke();
 			}
 		}
 
@@ -68,8 +124,10 @@ namespace DChess.Chess.Playground {
 		/// Else you undo the AI move and then the AI redoes it instantly.
 		/// </summary>
 		public void UndoLastMove() {
+			CancelComputerMove();
 			Board.UndoLastMove();
 			unDidLastMove = true;
+			BoardChanged?.Invoke();
 		}
 
 		public TeamType? GetComputerPlayerTeamType() {

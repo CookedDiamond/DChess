@@ -33,7 +33,8 @@ namespace DChess.Chess.Arena {
 		/// <summary>How long the player thought about the move that led to this position.</summary>
 		public long ThinkMilliseconds { get; }
 
-		public PositionSnapshot(Board board, Move lastMove, string moveText, long thinkMilliseconds) {
+		public PositionSnapshot(Board board, Move lastMove, string moveText, long thinkMilliseconds,
+			TeamType? sideToMove = null, Vector2Int[] changedSquares = null) {
 			Width = board.Size.x;
 			Height = board.Size.y;
 			Types = new PieceType[Width, Height];
@@ -47,8 +48,8 @@ namespace DChess.Chess.Arena {
 					Disabled[x, y] = board.SquareMap[x, y] == SquareType.Disabled;
 				}
 			}
-			SideToMove = board.GetTurnTeamType();
-			ChangedSquares = lastMove?.Changes.Select(c => c.boardPosition).Distinct().ToArray() ?? new Vector2Int[0];
+			SideToMove = sideToMove ?? board.GetTurnTeamType();
+			ChangedSquares = changedSquares ?? lastMove?.Changes.Select(c => c.boardPosition).Distinct().ToArray() ?? new Vector2Int[0];
 			MoveText = moveText;
 			ThinkMilliseconds = thinkMilliseconds;
 		}
@@ -69,7 +70,8 @@ namespace DChess.Chess.Arena {
 		/// <summary>Index (0 or 1) of the match player that plays white.</summary>
 		public int WhitePlayerIndex { get; }
 
-		public GameResult Result { get; private set; } = GameResult.Ongoing;
+		private volatile GameResult _result = GameResult.Ongoing;
+		public GameResult Result => _result;
 		public string ResultReason { get; private set; } = "";
 
 		public bool IsFinished => Result != GameResult.Ongoing;
@@ -96,7 +98,7 @@ namespace DChess.Chess.Arena {
 		public void Finish(GameResult result, string reason) {
 			lock (_lock) {
 				ResultReason = reason;
-				Result = result;
+				_result = result;
 			}
 		}
 

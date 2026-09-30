@@ -42,7 +42,26 @@ dotnet test DChess.sln -c Release
 
 When a human plays, click a piece and then its target square.
 
+Moves appear immediately while the opponent thinks. Bot calculation runs on a private
+board in the background, so drawing, resizing, menu controls, and replay remain responsive.
+
 **Sandbox:** a free board. Click to move pieces for both sides. `A` lets the bot move, `D` undoes a move, `S` prints the evaluation.
+
+Sandbox bot requests also run in the background. Moving, undoing, or leaving the board
+cancels the request; its result cannot overwrite a newer position.
+
+## Autosave and resume
+
+Sandbox games and arena matches are saved after each move and when returning to the menu
+or closing the app. Choose **Resume saved game** in the menu after reopening DChess.
+The save includes the current turn, piece move counts and castling rights, active variants,
+undo history, player names, time limits, match scores, and replay positions. An interrupted
+bot turn is recalculated when the game resumes.
+
+The latest session is stored at `%LOCALAPPDATA%\DChess\autosave.json`. Writes replace the
+file atomically and retain the previous save as `autosave.json.bak`; a damaged primary save
+falls back to that backup. Starting a new game replaces the latest session. CLI games are
+independent of the GUI autosave.
 
 Castling requires an unmoved king and rook and a clear, playable path. There is no rule against castling through check, consistent with king capture rules.
 
@@ -68,6 +87,8 @@ dotnet run --project DChess.csproj -- cli --variant castling
 
 ```bash
 dotnet run --project DChess.csproj -c Release -- --smoke-test
+dotnet run --project DChess.csproj -c Release -- --smoke-test sandbox
+dotnet run --project DChess.csproj -c Release -- --smoke-test arena
 ```
 
 ## Writing a bot
@@ -83,6 +104,9 @@ Included bots:
 ## Tests
 
 Automated tests (`Tests/`) cover movement, captures, promotion, castling, variant undo, independent AI search copies, CLI options, and TCP framing.
+
+They also cover save/reload and backup recovery, resuming a human match, cancellation of
+stale bot results, UI-thread move commits, and immediate human-move display during bot calculation.
 
 ## Multiplayer
 

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace DChess.Chess.Variants {
 	public class VariantCastling: Variant {
 		private readonly int castlingDistance;
+		public int CastlingDistance => castlingDistance;
 
 		public VariantCastling(int castlingDistance = 2)
 		{

@@ -31,6 +31,7 @@ namespace DChess.UI.Scenes
 		private Rectangle _startButton;
 		private Rectangle _sandboxButton;
 		private Rectangle _quitButton;
+		private Rectangle _resumeButton;
 
 		public SceneMenu(Game1 game) {
 			_game = game;
@@ -53,6 +54,7 @@ namespace DChess.UI.Scenes
 			addButton(start, startMatch);
 			addButton(new ButtonRect(() => _sandboxButton, "Sandbox (free play)"), startSandbox);
 			addButton(new ButtonRect(() => _quitButton, "Quit"), () => _game.Exit());
+			addButton(new ButtonRect(() => _resumeButton, "Resume saved game") { IsEnabled = () => _game.CanResume }, () => _game.ResumeGame());
 		}
 
 		private void addButton(ButtonRect button, Button.OnButtonClicked onClick) {
@@ -129,19 +131,20 @@ namespace DChess.UI.Scenes
 			int panelX = (screen.X - panelWidth) / 2;
 			int rowHeight = (int)(1.3f * u);
 			int rowGap = (int)(0.45f * u);
-			int top = (int)(5.2f * u);
+			int top = (int)(4.6f * u);
 
 			for (int row = 0; row < _rows.Length; row++) {
 				_rows[row] = new Rectangle(panelX, top + row * (rowHeight + rowGap), panelWidth, rowHeight);
 			}
 
-			int buttonsTop = _rows[^1].Bottom + (int)(1.6f * u);
+			int buttonsTop = _rows[^1].Bottom + (int)(1.2f * u);
 			_startButton = new Rectangle(panelX, buttonsTop, panelWidth, (int)(1.6f * u));
 			int halfWidth = (panelWidth - rowGap) / 2;
 			int secondTop = _startButton.Bottom + rowGap;
 			_sandboxButton = new Rectangle(panelX, secondTop, halfWidth, (int)(1.2f * u));
 			_quitButton = new Rectangle(panelX + panelWidth - halfWidth, secondTop, halfWidth, (int)(1.2f * u));
-			_panel = new Rectangle(panelX - (int)u, _rows[0].Y - (int)u, panelWidth + 2 * (int)u, _quitButton.Bottom - _rows[0].Y + 2 * (int)u);
+			_resumeButton = new Rectangle(panelX, _quitButton.Bottom + rowGap, panelWidth, (int)(1.2f * u));
+			_panel = new Rectangle(panelX - (int)u, _rows[0].Y - (int)u, panelWidth + 2 * (int)u, _resumeButton.Bottom - _rows[0].Y + 2 * (int)u);
 		}
 
 		// The selector of a row takes the right 60% of the row: [<] value [>]
@@ -190,6 +193,8 @@ namespace DChess.UI.Scenes
 			spriteBatch.DrawTextLine(hint, new Vector2(lastRow.X, lastRow.Bottom + 0.4f * u), 0.55f * u, Theme.TextDim);
 
 			base.Draw(spriteBatch);
+			if (_game.SaveStatus != null)
+				spriteBatch.DrawTextLine(_game.SaveStatus, new Vector2(_panel.X, _panel.Bottom + 0.2f * u), 0.5f * u, Theme.TextDim);
 
 			int botCount = _players.Count(p => !p.IsHuman);
 			string footer = $"{botCount} bots found. Add your own bot as a file in the Bots folder (see BOTS.md).";

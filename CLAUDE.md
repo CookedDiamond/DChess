@@ -62,6 +62,8 @@ Content/                   MGCB content (textures, fonts)
   Active variants live on `Board.Variants` — adding a new variant = new subclass + register on the board.
 
 - **`BoardManager`** wires up board + UI + networking, builds starting positions (`Build8x8StandardBoard`, `BuildSmallBoard`), and routes moves through the network layer.
+  - GUI code uses `BeginComputerMove` and polls `UpdateComputerMove`; it must never call the blocking `MakeComputerMove` used by the CLI. Results are calculated on a snapshot, checked against `Board.Revision`, and committed only on the UI thread. Cancel pending work on undo or scene exit.
+  - `Persistence/` stores the latest GUI session at `%LOCALAPPDATA%/DChess/autosave.json`, with atomic replacement and a backup. Board saves preserve piece identity and complete undo history; match saves retain settings, scores, and replay positions. The menu's Resume button loads the saved session.
 
 - **Bots** (`BotApi/`, `Bots/`) — `BotRunner.RequestMove` clones the board, calls `IChessBot.Think` on a separate thread with a time limit and validates the answer with `FindEquivalentLegalMove`. `MinMaxBot` (iterative deepening alpha-beta with quiescence search, make/undo on one board) replaced the old `MinMaxRecursive`; `BoardManager.MakeComputerMove` (CLI `ai`, sandbox `A`) uses it by default. `Evaluation` sums per-piece scores via `Piece.GetPieceScore(board, pos, team)`.
 

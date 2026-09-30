@@ -11,6 +11,8 @@ namespace DChess.Chess.Variants
 
 		private readonly int _decreasingIntervall;
 		private readonly float _decreasingStrenth;
+		public int Interval => _decreasingIntervall;
+		public float Strength => _decreasingStrenth;
 
 		public VariantBattleRoyale(int decreasingIntervall, float decreasingStrenth = 1f) {
 			if (decreasingIntervall <= 0) throw new ArgumentOutOfRangeException(nameof(decreasingIntervall));

@@ -1,6 +1,7 @@
 using DChess.BotApi;
 using DChess.Chess.Pieces;
 using DChess.Chess.Playground;
+using DChess.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,25 +37,54 @@ namespace DChess.Chess.Arena {
 		private readonly int[] _wins = new int[2];
 		private int _draws;
 		private volatile IChessBot[] _currentPlayers = new IChessBot[0];
+		private Board _currentBoard;
+		private readonly MatchState _resume;
+		private readonly Action<MatchState> _autosave;
 
 		public MatchSettings Settings { get; }
 
 		/// <summary>Display names of player 1 and 2 (numbered if both are the same bot).</summary>
 		public string[] PlayerNames { get; }
 
-		public bool IsFinished { get; private set; }
+		private volatile bool _isFinished;
+		public bool IsFinished => _isFinished;
 		public bool IsCancelled => _cancellation.IsCancellationRequested;
 
 		/// <summary>Called on the match thread after every game.</summary>
 		public event Action<GameRecord> GameFinished;
 
-		public Match(MatchSettings settings) {
+		public Match(MatchSettings settings, MatchState resume = null, Action<MatchState> autosave = null) {
 			Settings = settings;
+			_resume = resume;
+			_autosave = autosave;
 			string name1 = settings.Player1.Name;
 			string name2 = settings.Player2.Name;
 			PlayerNames = name1 == name2
 				? new[] { $"{name1} (1)", $"{name2} (2)" }
 				: new[] { name1, name2 };
+			if (resume != null) {
+				foreach (var savedGame in resume.Games) {
+					var record = savedGame.Restore();
+					_games.Add(record);
+					if (record.Result == GameResult.WhiteWins) { _scores[record.WhitePlayerIndex]++; _wins[record.WhitePlayerIndex]++; }
+					if (record.Result == GameResult.BlackWins) { _scores[1 - record.WhitePlayerIndex]++; _wins[1 - record.WhitePlayerIndex]++; }
+					if (record.Result == GameResult.Draw) { _scores[0] += 0.5; _scores[1] += 0.5; _draws++; }
+				}
+				_currentBoard = resume.Board?.Restore();
+			}
+		}
+
+		public MatchState CaptureState() {
+			lock (_lock) return new MatchState {
+				Player1 = Settings.Player1.Name, Player2 = Settings.Player2.Name, GameCount = Settings.Games,
+				TimeLimitMilliseconds = Settings.TimeLimitMilliseconds, AlternateColors = Settings.AlternateColors,
+				MaxPlies = Settings.MaxPlies, Board = _currentBoard == null ? null : BoardState.Capture(_currentBoard),
+				Games = _games.Select(SavedGame.Capture).ToList()
+			};
+		}
+
+		private void saveProgress() {
+			if (!IsCancelled) _autosave?.Invoke(CaptureState());
 		}
 
 		public List<GameRecord> Games {
@@ -95,7 +125,9 @@ namespace DChess.Chess.Arena {
 
 		public void Run() {
 			try {
-				for (int i = 0; i < Settings.Games && !IsCancelled; i++) {
+				int start = _games.Count;
+				if (start > 0 && !_games[^1].IsFinished) start--;
+				for (int i = start; i < Settings.Games && !IsCancelled; i++) {
 					GameRecord record = playGame(i);
 					lock (_lock) {
 						int whiteIndex = record.WhitePlayerIndex;
@@ -117,13 +149,14 @@ namespace DChess.Chess.Arena {
 						}
 					}
 					GameFinished?.Invoke(record);
+					saveProgress();
 				}
 			}
 			catch (Exception e) {
 				Console.WriteLine($"Match crashed: {e}");
 			}
 			finally {
-				IsFinished = true;
+				_isFinished = true;
 			}
 		}
 
@@ -134,10 +167,16 @@ namespace DChess.Chess.Arena {
 				: new[] { Settings.Player2, Settings.Player1 };
 			string[] names = { PlayerNames[whiteIndex], PlayerNames[1 - whiteIndex] };
 
-			var record = new GameRecord(gameIndex + 1, names[0], names[1], whiteIndex);
-			Board board = BoardSetup.CreateStandardBoard();
-			record.AddPosition(new PositionSnapshot(board, null, null, 0));
-			lock (_lock) _games.Add(record);
+			bool resuming = _resume != null && gameIndex < _games.Count && !_games[gameIndex].IsFinished;
+			var record = resuming ? _games[gameIndex] : new GameRecord(gameIndex + 1, names[0], names[1], whiteIndex);
+			Board board = resuming ? _currentBoard : BoardSetup.CreateStandardBoard();
+			lock (_lock) {
+				_currentBoard = board;
+				if (!resuming) {
+					record.AddPosition(new PositionSnapshot(board, null, null, 0));
+					_games.Add(record);
+				}
+			}
 
 			// Index 0 = white, 1 = black.
 			var players = new IChessBot[2];
@@ -155,14 +194,35 @@ namespace DChess.Chess.Arena {
 			_currentPlayers = players;
 			if (IsCancelled) Cancel();
 
-			var repetitions = new Dictionary<string, int> { [board.GetPositionKey()] = 1 };
-			int pliesWithoutProgress = 0;
+			var repetitions = new Dictionary<string, int>();
+			var replay = board.CloneBoard();
+			while (true) {
+				string replayKey = replay.GetPositionKey();
+				repetitions[replayKey] = repetitions.GetValueOrDefault(replayKey) + 1;
+				if (replay.GetMoveCount() == 0) break;
+				replay.UndoLastMove();
+			}
+			int pliesWithoutProgress = board.GetMoveHistory().Reverse().TakeWhile(m => !m.IsCapture && m.MovingPiece.Type != PieceType.Pawn).Count();
 
 			while (true) {
 				if (IsCancelled) {
 					record.Finish(GameResult.Aborted, "match cancelled");
 					break;
 				}
+
+				// Re-evaluate terminal rules before asking the next player, also after a resume.
+				TeamType winner = board.HasTeamWon();
+				if (winner != TeamType.None) {
+					record.Finish(winner == TeamType.White ? GameResult.WhiteWins : GameResult.BlackWins, "captured the king");
+					break;
+				}
+				string drawReason = pliesWithoutProgress >= 100 ? "50 moves without capture or pawn move"
+					: repetitions.GetValueOrDefault(board.GetPositionKey()) >= 3 ? "threefold repetition"
+					: isInsufficientMaterial(board) ? "insufficient material"
+					: board.GetMoveCount() >= Settings.MaxPlies ? $"move limit reached ({Settings.MaxPlies / 2} moves)"
+					: null;
+				if (drawReason != null) { record.Finish(GameResult.Draw, drawReason); break; }
+				saveProgress();
 
 				TeamType team = board.GetTurnTeamType();
 				int teamIndex = team == TeamType.White ? 0 : 1;
@@ -185,38 +245,16 @@ namespace DChess.Chess.Arena {
 				Move move = result.Move;
 				bool isProgress = move.IsCapture || move.MovingPiece.Type == PieceType.Pawn;
 				string moveText = MoveNotation.Describe(move, legalMoves);
-				board.MakeMove(move);
-				moveText += MoveNotation.Suffix(board);
-				record.AddPosition(new PositionSnapshot(board, board.GetLastMove(), moveText, result.ElapsedMilliseconds));
-
-				TeamType winner = board.HasTeamWon();
-				if (winner != TeamType.None) {
-					record.Finish(winner == TeamType.White ? GameResult.WhiteWins : GameResult.BlackWins, "captured the king");
-					break;
+				lock (_lock) {
+					board.MakeMove(move);
+					moveText += MoveNotation.Suffix(board);
+					record.AddPosition(new PositionSnapshot(board, board.GetLastMove(), moveText, result.ElapsedMilliseconds));
 				}
 
 				pliesWithoutProgress = isProgress ? 0 : pliesWithoutProgress + 1;
-				if (pliesWithoutProgress >= 100) {
-					record.Finish(GameResult.Draw, "50 moves without capture or pawn move");
-					break;
-				}
 
 				string key = board.GetPositionKey();
 				repetitions[key] = repetitions.GetValueOrDefault(key) + 1;
-				if (repetitions[key] >= 3) {
-					record.Finish(GameResult.Draw, "threefold repetition");
-					break;
-				}
-
-				if (isInsufficientMaterial(board)) {
-					record.Finish(GameResult.Draw, "insufficient material");
-					break;
-				}
-
-				if (board.GetMoveCount() >= Settings.MaxPlies) {
-					record.Finish(GameResult.Draw, $"move limit reached ({Settings.MaxPlies / 2} moves)");
-					break;
-				}
 			}
 
 			_currentPlayers = new IChessBot[0];

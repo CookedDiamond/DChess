@@ -14,18 +14,19 @@ namespace DChess.BotApi {
 		public string Name => "Human";
 
 		/// <summary>The position the human has to move in, or null while it is not the human's turn.</summary>
-		public BotBoard PendingBoard { get; private set; }
+		private BotBoard _pendingBoard;
+		public BotBoard PendingBoard => Volatile.Read(ref _pendingBoard);
 
 		public Move Think(BotBoard board, BotTimer timer) {
 			var pendingMove = new TaskCompletionSource<Move>(TaskCreationOptions.RunContinuationsAsynchronously);
 			_pendingMove = pendingMove;
 			if (_cancelled) pendingMove.TrySetCanceled();
-			PendingBoard = board;
+			Volatile.Write(ref _pendingBoard, board);
 			try {
 				return pendingMove.Task.GetAwaiter().GetResult();
 			}
 			finally {
-				PendingBoard = null;
+				Volatile.Write(ref _pendingBoard, null);
 			}
 		}
 

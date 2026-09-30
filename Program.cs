@@ -18,6 +18,8 @@ if (ConsoleArena.IsArenaCommand(args)) {
 }
 
 // "--smoke-test" draws ten frames and exits (checks that content loads and rendering works).
-using var game = new Game1(Array.IndexOf(args, "--smoke-test") >= 0 ? 10 : 0);
+int smokeIndex = Array.IndexOf(args, "--smoke-test");
+string smokeScene = smokeIndex >= 0 && smokeIndex + 1 < args.Length ? args[smokeIndex + 1] : null;
+using var game = new Game1(smokeIndex >= 0 ? 10 : 0, smokeScene);
 game.Run();
 return 0;

@@ -165,7 +165,7 @@ namespace DChess.Bots {
 
 		private bool isOutOfTime() {
 			_nodes++;
-			if ((_nodes & 255) == 0 && _timer.ElapsedMilliseconds >= _stopAtMilliseconds) {
+			if ((_nodes & 255) == 0 && (_timer.IsTimeUp || _timer.ElapsedMilliseconds >= _stopAtMilliseconds)) {
 				_outOfTime = true;
 			}
 			return _outOfTime;

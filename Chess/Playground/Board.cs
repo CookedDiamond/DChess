@@ -27,6 +27,9 @@ namespace DChess.Chess.Playground {
 		public List<Variant> Variants { get; set; }
 
 		private readonly List<Move> _moveHistory = new();
+		public long Revision { get; private set; }
+		public IReadOnlyList<Move> GetMoveHistory() => _moveHistory.ToArray();
+		internal void RestoreHistory(IEnumerable<Move> moves) => _moveHistory.AddRange(moves);
 
 		public Board(Vector2Int size) {
 			Size = size;
@@ -35,15 +38,18 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void PlacePiece(Vector2Int position, Piece piece) {
+			Revision++;
 			if (piece == Piece.NULL_PIECE) Pieces.Remove(position);
 			else Pieces[position] = piece;
 		}
 
 		public bool RemovePiece(Vector2Int position) {
+			Revision++;
 			return Pieces.Remove(position);
 		}
 
 		public void RemoveSquare(Vector2Int position) {
+			Revision++;
 			SquareMap[position.x, position.y] = SquareType.Disabled;
 			Pieces.Remove(position);
 		}
