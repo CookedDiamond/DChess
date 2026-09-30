@@ -1,6 +1,7 @@
-﻿using DChess.Util;
+using DChess.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,12 +17,23 @@ namespace DChess.UI.Scenes {
 
 		public Color BackGroundColor { get; protected set; } = Color.White;
 
-		public void MouseClick(Vector2Int mousePos) {
+		public virtual void MouseClick(Vector2Int mousePos) {
 			buttonManager.OnClick(mousePos);
 		}
 
 		public void MouseHover(Vector2Int mousePos) {
 			buttonManager.OnHover(mousePos);
+		}
+
+		/// <summary>Mouse wheel moved. Positive delta = scrolled up.</summary>
+		public virtual void MouseScroll(Vector2Int mousePos, int delta) {
+		}
+
+		/// <summary>A key was pressed (called once per press, arrow keys repeat while held).</summary>
+		public virtual void KeyPressed(Keys key) {
+		}
+
+		public virtual void Update(GameTime gameTime) {
 		}
 
 		public virtual void Draw(SpriteBatch spriteBatch) {

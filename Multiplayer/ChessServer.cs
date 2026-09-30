@@ -15,11 +15,11 @@ namespace DChess.Server {
 		public static readonly int PORT = 13000;
 
 		public ChessServer() {
-			Thread t = new Thread(new ThreadStart(Main));
+			Thread t = new Thread(new ThreadStart(listen));
 			t.Start();
 		}
 
-		public static void Main() {
+		private static void listen() {
 			TcpListener server = null;
 			try {
 				IPAddress localAddr = IPAddress.Parse(IP_ADRESS);

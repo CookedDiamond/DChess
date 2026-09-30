@@ -1,16 +1,11 @@
-﻿using DChess.Chess.Playground;
-using DChess.UI;
+using DChess.BotApi;
+using DChess.Chess.Arena;
 using DChess.UI.Scenes;
 using DChess.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
-using System.Runtime.Intrinsics.X86;
-using System.Threading.Tasks;
 
 namespace DChess {
 	public class Game1 : Game {
@@ -18,39 +13,64 @@ namespace DChess {
 		private static ScalingUtil _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
-		private readonly BoardManager _boardManager;
 		private readonly InputHandler _inputHandler;
 
 		private Scene _menuScene;
-		private Scene _boardScene;
 		private Scene _activeScene;
+		private bool _isResizing;
 
 		public static SpriteFont Font { get; private set; }
+
+		/// <summary>Size of the drawing area (window content) in pixels.</summary>
+		public static Point ScreenSize { get; private set; } = new(1280, 720);
+
 		public SceneType ActiveSceneType { get; private set; }
 
-		public Game1(BoardManager boardManager) {
-			_boardManager = boardManager;
+		public Game1() {
 			_inputHandler = new InputHandler();
 
 			_graphics = new GraphicsDeviceManager(this);
-			_gameScaling = new ScalingUtil(boardManager.Board, this, _graphics);
-
-			_boardScene = new SceneBoard(boardManager.BoardUI, boardManager.Board);
-			_menuScene = new SceneMenu(this, boardManager.Board, boardManager.BoardNetworking);
+			_gameScaling = new ScalingUtil(this, _graphics);
 
 			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
+			Exiting += (sender, args) => stopArena();
 		}
 
 		protected override void Initialize() {
-			_graphics.PreferredBackBufferHeight = 1080;
-			_graphics.PreferredBackBufferWidth = 1920;
+			// Open the window with 75% of the screen size, centered.
+			DisplayMode display = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+			int width = Math.Min(display.Width, Math.Max(1024, (int)(display.Width * 0.75f)));
+			int height = Math.Min(display.Height, Math.Max(640, (int)(display.Height * 0.75f)));
+			_graphics.PreferredBackBufferWidth = width;
+			_graphics.PreferredBackBufferHeight = height;
 			_graphics.ApplyChanges();
+			Window.Position = new Point((display.Width - width) / 2, (display.Height - height) / 2);
 
+			Window.Title = "DChess - Bot Arena";
 			Window.AllowUserResizing = true;
 			Window.AllowAltF4 = true;
+			Window.ClientSizeChanged += onClientSizeChanged;
+			updateScreenSize();
 
 			base.Initialize();
+		}
+
+		private void onClientSizeChanged(object sender, EventArgs e) {
+			Rectangle bounds = Window.ClientBounds;
+			if (_isResizing || bounds.Width <= 0 || bounds.Height <= 0) return;
+
+			_isResizing = true;
+			_graphics.PreferredBackBufferWidth = bounds.Width;
+			_graphics.PreferredBackBufferHeight = bounds.Height;
+			_graphics.ApplyChanges();
+			_isResizing = false;
+			updateScreenSize();
+		}
+
+		private void updateScreenSize() {
+			PresentationParameters parameters = GraphicsDevice.PresentationParameters;
+			ScreenSize = new Point(parameters.BackBufferWidth, parameters.BackBufferHeight);
 		}
 
 		protected override void LoadContent() {
@@ -59,36 +79,47 @@ namespace DChess {
 			TextureLoader.InitialiceTextures(_graphics.GraphicsDevice, Content, 32);
 			Font = Content.Load<SpriteFont>("Font");
 			_gameScaling.Initialize();
+
+			_menuScene = new SceneMenu(this);
+			OpenMenu();
 		}
 
 		protected override void Update(GameTime gameTime) {
-			// Computer move
-			if (_boardManager.GetComputerPlayerTeamType() != null
-				&& _boardManager.GetComputerPlayerTeamType() == _boardManager.Board.GetTurnTeamType()) {
-				_boardManager.MakeComputerMove();
-			}
-
+			updateScreenSize();
 			_gameScaling.Update();
 
-			_inputHandler.HandleInputs(Mouse.GetState(), _activeScene, _boardManager);
+			if (IsActive) {
+				_inputHandler.HandleInputs(Mouse.GetState(), Keyboard.GetState(), _activeScene, gameTime);
+			}
+			_activeScene.Update(gameTime);
 
 			base.Update(gameTime);
 		}
 
-		public void SwitchScene(SceneType scene) {
-			switch (scene) {
-				case SceneType.Board:
-					_activeScene = _boardScene;
-					break;
-				case SceneType.Menu:
-					_activeScene = _menuScene;
-					break;
-				case SceneType.None:
-					throw new NotImplementedException();
-				default:
-					throw new NotImplementedException();
-			}
-			ActiveSceneType = scene;
+		public void OpenMenu() {
+			stopArena();
+			switchScene(_menuScene, SceneType.Menu);
+		}
+
+		/// <summary>Starts a match between two players and shows it.</summary>
+		public void StartMatch(MatchSettings settings) {
+			stopArena();
+			switchScene(new SceneArena(this, settings), SceneType.Arena);
+		}
+
+		/// <summary>Opens a board to play freely, the bot moves when A is pressed.</summary>
+		public void StartSandbox(BotInfo helperBot, int botTimeLimitMilliseconds) {
+			stopArena();
+			switchScene(new SceneBoard(this, helperBot, botTimeLimitMilliseconds), SceneType.Board);
+		}
+
+		private void stopArena() {
+			(_activeScene as SceneArena)?.Stop();
+		}
+
+		private void switchScene(Scene scene, SceneType sceneType) {
+			_activeScene = scene;
+			ActiveSceneType = sceneType;
 		}
 
 		protected override void Draw(GameTime gameTime) {
@@ -109,6 +140,7 @@ namespace DChess {
 	public enum SceneType {
 		None,
 		Board,
-		Menu
+		Menu,
+		Arena
 	}
 }

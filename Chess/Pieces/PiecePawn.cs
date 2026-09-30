@@ -1,4 +1,4 @@
-﻿using DChess.Chess.ChessAI;
+using DChess.Chess.ChessAI;
 using DChess.Chess.Playground;
 using DChess.Util;
 using System;
@@ -22,6 +22,11 @@ namespace DChess.Chess.Pieces
 
 		public override float GetPieceScore() {
 			return 1;
+		}
+
+		/// <summary>True if the pawn is promoted when it lands on the square (no square in front of it).</summary>
+		public bool PromotesOn(Vector2Int square) {
+			return !_board.IsValidPosition(square + Board.GetTeamDirection(Team));
 		}
 
 		public override float GetPieceScore(Board board, Vector2Int position, TeamType team) {

@@ -1,4 +1,5 @@
-﻿using DChess.Chess.ChessAI;
+using DChess.BotApi;
+using DChess.Chess.Arena;
 using DChess.Chess.Pieces;
 using DChess.Util;
 using System;
@@ -18,6 +19,8 @@ namespace DChess.Chess.Playground {
 
 		private TeamType? _computerPlayer = null;
 		private bool unDidLastMove = false;
+		private IChessBot _computerBot;
+		private int _computerTimeLimitMilliseconds = 1000;
 
 		public BoardManager(Board board, BoardNetworking boardNetworking) {
 			Board = board;
@@ -29,13 +32,26 @@ namespace DChess.Chess.Playground {
 			_computerPlayer = team;
 		}
 
+		/// <summary>Sets the bot that makes the computer moves.</summary>
+		public void SetComputerBot(IChessBot bot, int timeLimitMilliseconds) {
+			_computerBot = bot;
+			_computerTimeLimitMilliseconds = timeLimitMilliseconds;
+		}
+
+		public string ComputerBotName => _computerBot?.Name;
+
 		public void MakeComputerMove(bool automatic = true) {
 			if (automatic && unDidLastMove) return;
 			if (!automatic && unDidLastMove) unDidLastMove = false;
 			if (Board.HasTeamWon() != TeamType.None) return;
-			var algo = new MinMaxRecursive();
-			var move = algo.GetBestMove(Board);
-			Board.MakeMove(move);
+			if (_computerBot == null) return;
+
+			var result = BotRunner.RequestMove(_computerBot, Board, _computerTimeLimitMilliseconds, CancellationToken.None);
+			if (result.Move == null) {
+				Console.WriteLine($"{_computerBot.Name} could not move: {result.Error}");
+				return;
+			}
+			Board.MakeMove(result.Move);
 		}
 
 		public void MakeMove(Move move) {
@@ -59,31 +75,7 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void Build8x8StandardBoard() {
-			for (int i = 0; i < Board.Size.x; i++) {
-				Board.PlacePiece(new Vector2Int(i, 1), new PiecePawn(TeamType.White, Board));
-				Board.PlacePiece(new Vector2Int(i, Board.Size.y - 2), new PiecePawn(TeamType.Black, Board));
-				if (i == 0 || i == Board.Size.x - 1) {
-					Board.PlacePiece(new Vector2Int(i, 0), new PieceRook(TeamType.White, Board));
-					Board.PlacePiece(new Vector2Int(i, Board.Size.y - 1), new PieceRook(TeamType.Black, Board));
-				}
-				else if (i == 2 || i == Board.Size.x - 3) {
-					Board.PlacePiece(new Vector2Int(i, 0), new PieceBishop(TeamType.White, Board));
-					Board.PlacePiece(new Vector2Int(i, Board.Size.y - 1), new PieceBishop(TeamType.Black, Board));
-				}
-				else if (i == 1 || i == Board.Size.x - 2) {
-					Board.PlacePiece(new Vector2Int(i, 0), new PieceKnight(TeamType.White, Board));
-					Board.PlacePiece(new Vector2Int(i, Board.Size.y - 1), new PieceKnight(TeamType.Black, Board));
-				}
-
-				if (i == 3) {
-					Board.PlacePiece(new Vector2Int(i, 0), new PieceQueen(TeamType.White, Board));
-					Board.PlacePiece(new Vector2Int(i, Board.Size.y - 1), new PieceQueen(TeamType.Black, Board));
-				}
-				if (i == Board.Size.x - 4) {
-					Board.PlacePiece(new Vector2Int(i, 0), new PieceKing(TeamType.White, Board));
-					Board.PlacePiece(new Vector2Int(i, Board.Size.y - 1), new PieceKing(TeamType.Black, Board));
-				}
-			}
+			BoardSetup.PlaceStandardPieces(Board);
 		}
 
 		public void BuildSmallBoard() {

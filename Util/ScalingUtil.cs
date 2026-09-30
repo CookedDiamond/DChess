@@ -1,4 +1,4 @@
-﻿using DChess.Chess.Playground;
+using DChess.Chess.Playground;
 using Microsoft.Xna.Framework;
 using SharpDX.Direct2D1.Effects;
 using System;
@@ -14,7 +14,7 @@ namespace DChess.Util
     public class ScalingUtil {
 		public static ScalingUtil Instance { get; private set; }
 
-		private readonly Board _board;
+		private Board _board;
 		private readonly GraphicsDeviceManager _graphics;
 		private readonly Game1 _game;
 
@@ -34,11 +34,15 @@ namespace DChess.Util
 		public float CenterOffsetX { get; private set; }
 		public float CenterOffsetY { get; private set; }
 
-		public ScalingUtil(Board board, Game1 game, GraphicsDeviceManager graphics) {
-			_board = board;
+		public ScalingUtil(Game1 game, GraphicsDeviceManager graphics) {
 			_graphics = graphics;
 			_game = game;
 			Instance ??= this;
+		}
+
+		/// <summary>The board that is drawn in the board scene.</summary>
+		public void SetBoard(Board board) {
+			_board = board;
 		}
 
 		public void Initialize() {
@@ -73,11 +77,13 @@ namespace DChess.Util
 		}
 
 		public void Update() {
-			calculateBoardCenterOffsets();
-			if (_game.ActiveSceneType == SceneType.Board) {
+			if (_board != null) {
+				calculateBoardCenterOffsets();
+			}
+			if (_game.ActiveSceneType == SceneType.Board && _board != null) {
 				Scale = calculateScaleFromBoard();
 			}
-			else if (_game.ActiveSceneType == SceneType.Menu) {
+			else {
 				Scale = calculateScaleFromWindowSize();
 			}
 			_factor = getFactor();

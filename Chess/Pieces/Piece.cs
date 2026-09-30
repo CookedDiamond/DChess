@@ -1,4 +1,4 @@
-﻿using DChess.Chess.Playground;
+using DChess.Chess.Playground;
 using DChess.Util;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -154,21 +154,26 @@ namespace DChess.Chess.Pieces {
 			};
 		}
 
-		private Piece getPieceFromType() {
+		private Piece getPieceFromType(Board board) {
 			return Type switch { 
-				PieceType.Pawn => new PiecePawn(Team, _board),
-				PieceType.Bishop => new PieceBishop(Team, _board),
-				PieceType.Knight => new PieceKnight(Team, _board),
-				PieceType.Rook => new PieceRook(Team, _board),
-				PieceType.Queen => new PieceQueen(Team, _board),
-				PieceType.King => new PieceKing(Team, _board),
+				PieceType.Pawn => new PiecePawn(Team, board),
+				PieceType.Bishop => new PieceBishop(Team, board),
+				PieceType.Knight => new PieceKnight(Team, board),
+				PieceType.Rook => new PieceRook(Team, board),
+				PieceType.Queen => new PieceQueen(Team, board),
+				PieceType.King => new PieceKing(Team, board),
 				PieceType.None => NULL_PIECE,
 				_ => throw new NotImplementedException()	
 			};
 		}
 
-		public Piece ClonePiece() {
-			Piece clonedPiece = getPieceFromType();
+		/// <summary>
+		/// Pieces calculate their moves on the board they belong to,
+		/// so a clone has to be bound to the board it is placed on.
+		/// </summary>
+		public Piece ClonePiece(Board targetBoard) {
+			Piece clonedPiece = getPieceFromType(targetBoard);
+			if (clonedPiece == NULL_PIECE) return NULL_PIECE;
 			clonedPiece.MoveCount = MoveCount;
 			return clonedPiece;
 		}

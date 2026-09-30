@@ -1,26 +1,50 @@
-﻿using DChess.Chess.Playground;
+using DChess.BotApi;
+using DChess.Chess.Arena;
+using DChess.Chess.Playground;
 using DChess.Extensions;
 using DChess.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DChess.UI.Scenes
 {
+	/// <summary>
+	/// Sandbox: move pieces for both sides by clicking.
+	/// A: let the bot make a move, D: undo, S: print the evaluation, Esc: menu.
+	/// </summary>
     public class SceneBoard : Scene {
+		private readonly Game1 _game;
 		private readonly BoardUI _boardUI;
 		private readonly Board _board;
-		
-		public SceneBoard(BoardUI boardUI, Board board) {
-			_boardUI = boardUI;
-			_board = board;
+		private readonly BoardManager _boardManager;
+
+		public SceneBoard(Game1 game, BotInfo helperBot, int botTimeLimitMilliseconds) {
+			_game = game;
+			_board = BoardSetup.CreateStandardBoard();
+			_boardManager = new BoardManager(_board, new BoardNetworking());
+			if (helperBot != null) {
+				_boardManager.SetComputerBot(helperBot.Create(), botTimeLimitMilliseconds);
+			}
+			_boardUI = _boardManager.BoardUI;
+			ScalingUtil.Instance.SetBoard(_board);
 
 			BackGroundColor = Color.DarkSeaGreen;
 			InitializeBoardButtons();
+
+			var menuButton = new ButtonRect(() => {
+				Point screen = Game1.ScreenSize;
+				int height = screen.Y / 20;
+				return new Rectangle(screen.X - 5 * height - 10, 10, 5 * height, height);
+			}, "Menu (Esc)");
+			menuButton.Initialize(buttonManager, () => _game.OpenMenu());
+			content.Add(menuButton);
 		}
 
 		private void InitializeBoardButtons() {
@@ -31,13 +55,43 @@ namespace DChess.UI.Scenes
 			}
 		}
 
+		public override void Update(GameTime gameTime) {
+			// Computer move
+			if (_boardManager.GetComputerPlayerTeamType() != null
+				&& _boardManager.GetComputerPlayerTeamType() == _board.GetTurnTeamType()) {
+				_boardManager.MakeComputerMove();
+			}
+		}
+
+		public override void KeyPressed(Keys key) {
+			switch (key) {
+				case Keys.A:
+					_boardManager.MakeComputerMove(automatic: false);
+					break;
+				case Keys.S:
+					Console.WriteLine($"Current Eval: {_board.GetEvaluaton()}");
+					break;
+				case Keys.D:
+					_boardManager.UndoLastMove();
+					break;
+				case Keys.Escape:
+					_game.OpenMenu();
+					break;
+			}
+		}
+
 		public override void Draw(SpriteBatch spriteBatch) {
 			_boardUI.Draw(spriteBatch);
-			spriteBatch.DrawBoundedText($"Moves: {_board.GetMoveCount()}", 
-				new Vector2(0,0), 
-				Color.White, 
-				new Vector2Int(100, 100),
-				Game1.Font);
+			float lineHeight = Game1.ScreenSize.Y / 30f;
+			spriteBatch.DrawTextLine($"Moves: {_board.GetMoveCount()}", new Vector2(10, 10), lineHeight, Color.White);
+
+			TeamType winner = _board.HasTeamWon();
+			string status = winner != TeamType.None ? $"{winner} wins!" : $"{_board.GetTurnTeamType()} to move";
+			spriteBatch.DrawTextLine(status, new Vector2(10, 10 + lineHeight * 1.3f), lineHeight, Color.White);
+
+			string botName = _boardManager.ComputerBotName;
+			string help = (botName != null ? $"A: {botName} moves   " : "") + "D: undo   S: print eval   Esc: menu";
+			spriteBatch.DrawTextLine(help, new Vector2(10, Game1.ScreenSize.Y - lineHeight * 1.4f), lineHeight * 0.8f, Color.White);
 			base.Draw(spriteBatch);
 		}
 	}

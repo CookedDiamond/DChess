@@ -1,4 +1,4 @@
-﻿using DChess.Chess.ChessAI;
+using DChess.Chess.ChessAI;
 using DChess.Chess.Pieces;
 using DChess.Chess.Variants;
 using DChess.Multiplayer;
@@ -35,6 +35,11 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void PlacePiece(Vector2Int position, Piece piece) {
+			// Empty squares are not stored, so the dictionary only ever contains real pieces.
+			if (piece == Piece.NULL_PIECE) {
+				Pieces.Remove(position);
+				return;
+			}
 			Pieces[position] = piece;
 		}
 
@@ -52,10 +57,13 @@ namespace DChess.Chess.Playground {
 		}
 
 		public bool MakeMove(Move move, bool doAfterTurnUpdate = true) {
-			move.Apply(this);
-			_moveHistory.Add(move);
+			// Variants can add changes to the played move (e.g. promotion),
+			// so work on a copy and never change the move object of the caller.
+			Move playedMove = move.Copy();
+			playedMove.Apply(this);
+			_moveHistory.Add(playedMove);
 			if (doAfterTurnUpdate) {
-				afterTurnUpdate(move);
+				afterTurnUpdate(playedMove);
 			}
 			return true;
 		}
@@ -65,16 +73,14 @@ namespace DChess.Chess.Playground {
 			var lastMove = GetLastMove();
 
 			lastMove.Undo(this);
-			_moveHistory.Remove(lastMove);
+			_moveHistory.RemoveAt(_moveHistory.Count - 1);
 		}
 
 		public void AddToLastMove(List<BoardChange> additionalChanges) {
 			Move lastMove = GetLastMove();
-			UndoLastMove();
 			foreach (var change in additionalChanges) {
-				lastMove.AddChange(change);
+				lastMove.AddAndApplyChange(this, change);
 			}
-			MakeMove(lastMove, false);
 		}
 
 		private void afterTurnUpdate(Move lastMove) {
@@ -177,6 +183,11 @@ namespace DChess.Chess.Playground {
 			return TeamType.None;
 		}
 
+		/// <summary>
+		/// Creates a completely independent copy of the board.
+		/// Every piece (also the captured ones in the move history) is cloned and bound to the new board,
+		/// so moves can be made and undone on the copy without touching this board.
+		/// </summary>
 		public Board CloneBoard() {
 			Board returnBoard = new (Size);
 
@@ -186,13 +197,26 @@ namespace DChess.Chess.Playground {
 				}
 			}
 
+			Dictionary<Piece, Piece> clonedPieces = new();
+			Piece getClone(Piece piece) {
+				if (piece == Piece.NULL_PIECE) return piece;
+				if (!clonedPieces.TryGetValue(piece, out Piece clone)) {
+					clone = piece.ClonePiece(returnBoard);
+					clonedPieces.Add(piece, clone);
+				}
+				return clone;
+			}
+
 			foreach (var pair in Pieces) {
-				var oldPiece = pair.Value;
-				returnBoard.PlacePiece(pair.Key, oldPiece.ClonePiece());
+				returnBoard.PlacePiece(pair.Key, getClone(pair.Value));
 			}
 
 			foreach (var move in _moveHistory) {
-				returnBoard._moveHistory.Add(move);
+				Move clonedMove = new();
+				foreach (var change in move.Changes) {
+					clonedMove.AddChange(change.boardPosition, getClone(change.oldPiece), getClone(change.newPiece));
+				}
+				returnBoard._moveHistory.Add(clonedMove);
 			}
 
 			foreach (var variant in Variants) {
@@ -200,6 +224,103 @@ namespace DChess.Chess.Playground {
 			}
 
 			return returnBoard;
+		}
+
+		/// <summary>
+		/// Finds the legal move on this board that does the same as the given move.
+		/// The given move may come from a cloned board (e.g. from a bot).
+		/// </summary>
+		/// <returns>The matching legal move of this board or null if the move is not legal here.</returns>
+		public Move FindEquivalentLegalMove(Move move) {
+			if (move == null) return null;
+			foreach (var legalMove in GetAllLegalMovesForTeam(GetTurnTeamType())) {
+				if (legalMove.IsEquivalentTo(move)) {
+					return legalMove;
+				}
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// True if a piece of the attacker team could capture on the square (standard piece movement).
+		/// Also works for empty squares.
+		/// </summary>
+		public bool IsSquareAttackedBy(Vector2Int square, TeamType attacker) {
+			// Pawns.
+			Vector2Int pawnOrigin = square - GetTeamDirection(attacker);
+			if (isPieceOf(pawnOrigin + Vector2Int.LEFT, attacker, PieceType.Pawn)
+				|| isPieceOf(pawnOrigin + Vector2Int.RIGHT, attacker, PieceType.Pawn)) {
+				return true;
+			}
+
+			// Knights and king.
+			foreach (var offset in KNIGHT_OFFSETS) {
+				if (isPieceOf(square + offset, attacker, PieceType.Knight)) return true;
+			}
+			foreach (var offset in KING_OFFSETS) {
+				if (isPieceOf(square + offset, attacker, PieceType.King)) return true;
+			}
+
+			// Sliding pieces.
+			foreach (var direction in KING_OFFSETS) {
+				bool diagonal = direction.x != 0 && direction.y != 0;
+				Vector2Int current = square + direction;
+				while (IsValidPosition(current)) {
+					Piece piece = GetPiece(current);
+					if (piece != Piece.NULL_PIECE) {
+						if (piece.Team == attacker
+							&& (piece.Type == PieceType.Queen
+								|| (diagonal && piece.Type == PieceType.Bishop)
+								|| (!diagonal && piece.Type == PieceType.Rook))) {
+							return true;
+						}
+						break;
+					}
+					current += direction;
+				}
+			}
+			return false;
+		}
+
+		private bool isPieceOf(Vector2Int position, TeamType team, PieceType type) {
+			Piece piece = GetPiece(position);
+			return piece.Team == team && piece.Type == type;
+		}
+
+		private static readonly Vector2Int[] KNIGHT_OFFSETS = {
+			new(2, 1), new(2, -1), new(1, 2), new(-1, 2), new(-2, 1), new(-2, -1), new(1, -2), new(-1, -2)
+		};
+
+		private static readonly Vector2Int[] KING_OFFSETS = {
+			new(1, 0), new(-1, 0), new(0, 1), new(0, -1), new(1, 1), new(1, -1), new(-1, 1), new(-1, -1)
+		};
+
+		/// <summary>
+		/// A string that is identical for identical positions (pieces, disabled squares, castling pieces, turn).
+		/// Used to detect repetitions.
+		/// </summary>
+		public string GetPositionKey() {
+			StringBuilder key = new(Size.x * Size.y + 16);
+			for (int y = 0; y < Size.y; y++) {
+				for (int x = 0; x < Size.x; x++) {
+					if (SquareMap[x, y] == SquareType.Disabled) {
+						key.Append('#');
+						continue;
+					}
+					Piece piece = GetPiece(new Vector2Int(x, y));
+					if (piece == Piece.NULL_PIECE) {
+						key.Append('.');
+						continue;
+					}
+					char pieceChar = Piece.TypeAsChar(piece);
+					// Unmoved kings and rooks can still castle, so they are a different position.
+					bool unmovedCastlingPiece = piece.MoveCount == 0 && (piece.Type == PieceType.King || piece.Type == PieceType.Rook);
+					if (unmovedCastlingPiece) pieceChar = pieceChar == 'k' ? 'x' : 'y';
+					key.Append(piece.Team == TeamType.White ? char.ToUpper(pieceChar) : pieceChar);
+				}
+			}
+			key.Append(IsWhitesTurn ? 'w' : 'b');
+			return key.ToString();
 		}
 
 		public static Vector2Int GetTeamDirection(TeamType team) {

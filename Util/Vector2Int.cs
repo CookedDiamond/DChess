@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -50,6 +50,19 @@ namespace DChess.Util {
 		public override string ToString() {
 			char xPos = (char)(x + 0x61);
 			return $"({xPos},{y + 1})";
+		}
+
+		/// <summary>Chess square name, e.g. (4, 1) -> "e2".</summary>
+		public string ToSquareName() {
+			return $"{(char)('a' + x)}{y + 1}";
+		}
+
+		/// <summary>Parses a chess square name, e.g. "e2" -> (4, 1).</summary>
+		public static Vector2Int FromSquareName(string name) {
+			if (name == null || name.Length < 2 || !char.IsLetter(name[0]) || !int.TryParse(name.Substring(1), out int rank)) {
+				throw new ArgumentException($"'{name}' is not a square name like 'e2'.");
+			}
+			return new Vector2Int(char.ToLower(name[0]) - 'a', rank - 1);
 		}
 
 		public override bool Equals(object obj) {

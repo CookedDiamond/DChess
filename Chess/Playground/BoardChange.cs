@@ -1,8 +1,9 @@
-﻿using DChess.Chess.Pieces;
+using DChess.Chess.Pieces;
 using DChess.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,11 +22,16 @@ namespace DChess.Chess.Playground {
 
 		public override bool Equals(object obj)
 		{
-			if (obj is not BoardChange) return false; 
+			if (obj is not BoardChange) return false;
 			BoardChange bc = (BoardChange)obj;
 			return (boardPosition == bc.boardPosition
 				&& oldPiece == bc.oldPiece
 				&& newPiece == bc.newPiece);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(boardPosition, RuntimeHelpers.GetHashCode(oldPiece), RuntimeHelpers.GetHashCode(newPiece));
 		}
 	}
 }
