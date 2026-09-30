@@ -43,7 +43,7 @@ namespace DChess.Persistence {
                         session.Validate();
                         LastError = path == Path ? null : "Recovered the previous autosave.";
                         return session;
-                    } catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException || ex is NullReferenceException || ex is NotSupportedException) {
+                    } catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException || ex is NullReferenceException || ex is NotSupportedException) {
                         LastError = "Could not resume autosave: " + ex.Message;
                     }
                 }

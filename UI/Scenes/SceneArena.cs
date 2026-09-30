@@ -23,6 +23,8 @@ namespace DChess.UI.Scenes {
 
 		private readonly Game1 _game;
 		private readonly Match _match;
+        public bool OwnsMatch { get; }
+        private readonly Action _back;
 		private readonly SnapshotBoardRenderer _renderer = new();
         private readonly StockfishEvaluation _evaluation = new();
         private PositionSnapshot _analysisSnapshot;
@@ -54,15 +56,22 @@ namespace DChess.UI.Scenes {
 		private readonly List<(Rectangle rect, int gameIndex)> _gameRows = new();
 		private readonly List<(Rectangle rect, int ply)> _moveCells = new();
 
-		public SceneArena(Game1 game, MatchSettings settings, MatchState resume = null, Action<MatchState> autosave = null) {
+        public SceneArena(Game1 game, MatchSettings settings, MatchState resume = null, Action<MatchState> autosave = null)
+            : this(game, new Match(settings, resume, autosave), null, -1, true) { }
+
+        public SceneArena(Game1 game, Match match, Action back, int gameIndex = -1, bool ownsMatch = false) {
 			_game = game;
+            OwnsMatch = ownsMatch;
+            _back = back ?? (() => _game.OpenMenu());
 			BackGroundColor = Theme.Background;
-			_match = new Match(settings, resume, autosave);
-			if (resume?.Games.Count > 0) {
-				_gameIndex = resume.Games.Count - 1;
-				_ply = resume.Games[^1].Positions.Count - 1;
+            _match = match;
+            var games = match.Games;
+            if (games.Count > 0) {
+                _gameIndex = gameIndex < 0 ? games.Count - 1 : Math.Clamp(gameIndex, 0, games.Count - 1);
+                _ply = match.IsFinished ? games[_gameIndex].OpeningPlies : games[_gameIndex].PositionCount - 1;
 			}
-			_match.Start();
+            _autoPlay = !match.IsFinished;
+            if (OwnsMatch) _match.Start();
 
 			addButton(() => _controlRects[0], () => "|<", () => goToPly(0));
 			addButton(() => _controlRects[1], () => "<", () => step(-1));
@@ -73,12 +82,12 @@ namespace DChess.UI.Scenes {
 			addButton(() => _controlRects[5], () => "-", () => changeSpeed(-1));
 			addButton(() => _controlRects[6], () => "+", () => changeSpeed(1));
 			addButton(() => _controlRects[7], () => "Flip", () => _manualFlip = !_manualFlip);
-			addButton(() => _backButton, () => "Back to Menu", () => _game.OpenMenu());
+            addButton(() => _backButton, () => OwnsMatch ? "Back to Menu" : "Back to Tournament", () => _back());
 		}
 
 		/// <summary>Stops the match (bots finish their current move in the background).</summary>
 		public void Stop() {
-			_match.Cancel();
+            if (OwnsMatch) _match.Cancel();
             _evaluation.Dispose();
 		}
 
@@ -201,7 +210,7 @@ namespace DChess.UI.Scenes {
 					break;
 				case Keys.Escape:
 				case Keys.Back:
-					_game.OpenMenu();
+                    _back();
 					break;
 			}
 		}
@@ -390,7 +399,7 @@ namespace DChess.UI.Scenes {
 			_backButton = new Rectangle(_leftPanel.X, _leftPanel.Bottom - (int)(2.2f * u), _leftPanel.Width, (int)(2.2f * u));
 			int gamesTop = _leftPanel.Y + (int)(12.6f * u);
 			_gamesListArea = new Rectangle(_leftPanel.X, gamesTop, _leftPanel.Width, _backButton.Y - gap - gamesTop);
-			int movesTop = _rightPanel.Y + (int)(9.4f * u);
+            int movesTop = _rightPanel.Y + (int)(11.8f * u);
 			_movesListArea = new Rectangle(_rightPanel.X, movesTop, _rightPanel.Width, _rightPanel.Bottom - (int)(4.2f * u) - movesTop);
 
 			_renderer.Area = _boardArea;
@@ -532,6 +541,10 @@ namespace DChess.UI.Scenes {
 			spriteBatch.DrawTextLine($"Half-move {_ply} of {totalPlies}", new Vector2(innerX, y), 0.85f * u, Theme.TextDim);
 			y += 1.2f * u;
 
+			spriteBatch.DrawTextLine(SpriteBatchExtensions.FitText(game.OpeningName, .75f * u, innerWidth), new Vector2(innerX, y), .75f * u, Theme.TextDim);
+            y += 1.05f * u;
+            spriteBatch.DrawTextLine($"{game.TimeLimitMilliseconds} ms/move  |  book: {game.OpeningPlies} plies", new Vector2(innerX, y), .7f * u, Theme.TextDim);
+            y += 1.05f * u;
 			foreach (string line in wrapText(game.ResultText, 0.85f * u, innerWidth).Take(3)) {
 				spriteBatch.DrawTextLine(line, new Vector2(innerX, y), 0.85f * u, game.IsFinished ? resultColor(game) : Theme.Warning);
 				y += 1.05f * u;
@@ -567,7 +580,7 @@ namespace DChess.UI.Scenes {
 			string[] help = {
 				"Space: play/pause   Left/Right: step",
 				"Home/End: start/end   Up/Down: game",
-				"+/-: speed   F: flip   Esc: menu",
+                OwnsMatch ? "+/-: speed   F: flip   Esc: menu" : "+/-: speed   F: flip   Esc: tournament",
 			};
 			float helpY = panel.Bottom - padding - help.Length * 1.1f * u;
 			foreach (string line in help) {
@@ -595,7 +608,7 @@ namespace DChess.UI.Scenes {
 				status = "Winner";
 				statusColor = Theme.Good;
 			}
-			else if (!game.IsFinished && _ply == last && snapshot.SideToMove == team) {
+            else if (!game.IsFinished && !_match.IsFinished && _ply == last && snapshot.SideToMove == team) {
 				if (humanToMove) {
 					status = "Your move";
 					statusColor = Theme.Good;

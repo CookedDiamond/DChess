@@ -35,6 +35,9 @@ internal sealed record AnalysisPosition(string Fen, string Unavailable = null) {
     }
 
     internal static AnalysisPosition FromGame(GameRecord game, int ply) {
+        if (game.Configuration.Variants.Any(v => v.Kind is not ("promotion" or "castling")) ||
+            game.Configuration.Variants.Any(v => v.Kind == "castling" && v.Parameter is not (0 or 2)))
+            return new(null, "Unsupported variant");
         var snapshot = game.GetPosition(ply);
         var board = new Board(new(snapshot.Width, snapshot.Height));
         for (int x = 0; x < snapshot.Width; x++) for (int y = 0; y < snapshot.Height; y++) {
@@ -46,10 +49,14 @@ internal sealed record AnalysisPosition(string Fen, string Unavailable = null) {
         // its original king/rook can no longer confer castling rights.
         var changed = Enumerable.Range(1, ply).SelectMany(i => game.GetPosition(i).ChangedSquares).ToHashSet();
         string rights = "";
-        foreach (var (y, k, q) in new[] { (0, "K", "Q"), (7, "k", "q") }) {
+        foreach (var (y, k, q) in game.Configuration.Variants.Any(v => v.Kind == "castling") ? new[] { (0, "K", "Q"), (7, "k", "q") } : Array.Empty<(int, string, string)>()) {
             if (changed.Contains(new(4, y))) continue;
-            if (!changed.Contains(new(7, y))) rights += k;
-            if (!changed.Contains(new(0, y))) rights += q;
+            var team = y == 0 ? TeamType.White : TeamType.Black;
+            var king = board.GetPiece(new(4, y));
+            if (king.Type != PieceType.King || king.Team != team) continue;
+            var kingRook = board.GetPiece(new(7, y)); var queenRook = board.GetPiece(new(0, y));
+            if (!changed.Contains(new(7, y)) && kingRook.Type == PieceType.Rook && kingRook.Team == team) rights += k;
+            if (!changed.Contains(new(0, y)) && queenRook.Type == PieceType.Rook && queenRook.Team == team) rights += q;
         }
         int quiet = 0;
         for (int i = ply; i > 0; i--) {

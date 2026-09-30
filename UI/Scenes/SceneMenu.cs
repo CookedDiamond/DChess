@@ -32,6 +32,7 @@ namespace DChess.UI.Scenes
 		private Rectangle _sandboxButton;
 		private Rectangle _quitButton;
 		private Rectangle _resumeButton;
+        private Rectangle _tournamentButton;
 
 		public SceneMenu(Game1 game) {
 			_game = game;
@@ -55,6 +56,7 @@ namespace DChess.UI.Scenes
 			addButton(new ButtonRect(() => _sandboxButton, "Sandbox (free play)"), startSandbox);
 			addButton(new ButtonRect(() => _quitButton, "Quit"), () => _game.Exit());
 			addButton(new ButtonRect(() => _resumeButton, "Resume saved game") { IsEnabled = () => _game.CanResume }, () => _game.ResumeGame());
+            addButton(new ButtonRect(() => _tournamentButton, "Tournaments & history"), () => _game.OpenTournaments());
 		}
 
 		private void addButton(ButtonRect button, Button.OnButtonClicked onClick) {
@@ -124,14 +126,14 @@ namespace DChess.UI.Scenes
 
 		private void layout() {
 			Point screen = Game1.ScreenSize;
-			_unit = screen.Y / 20f;
+            _unit = screen.Y / 22f;
 			float u = _unit;
 
 			int panelWidth = (int)Math.Min(screen.X * 0.9f, 16 * u);
 			int panelX = (screen.X - panelWidth) / 2;
 			int rowHeight = (int)(1.3f * u);
 			int rowGap = (int)(0.45f * u);
-			int top = (int)(4.6f * u);
+            int top = (int)(4.2f * u);
 
 			for (int row = 0; row < _rows.Length; row++) {
 				_rows[row] = new Rectangle(panelX, top + row * (rowHeight + rowGap), panelWidth, rowHeight);
@@ -144,7 +146,8 @@ namespace DChess.UI.Scenes
 			_sandboxButton = new Rectangle(panelX, secondTop, halfWidth, (int)(1.2f * u));
 			_quitButton = new Rectangle(panelX + panelWidth - halfWidth, secondTop, halfWidth, (int)(1.2f * u));
 			_resumeButton = new Rectangle(panelX, _quitButton.Bottom + rowGap, panelWidth, (int)(1.2f * u));
-			_panel = new Rectangle(panelX - (int)u, _rows[0].Y - (int)u, panelWidth + 2 * (int)u, _resumeButton.Bottom - _rows[0].Y + 2 * (int)u);
+            _tournamentButton = new Rectangle(panelX, _resumeButton.Bottom + rowGap, panelWidth, (int)(1.2f * u));
+            _panel = new Rectangle(panelX - (int)u, _rows[0].Y - (int)u, panelWidth + 2 * (int)u, _tournamentButton.Bottom - _rows[0].Y + 2 * (int)u);
 		}
 
 		// The selector of a row takes the right 60% of the row: [<] value [>]
@@ -168,8 +171,8 @@ namespace DChess.UI.Scenes
 			Point screen = Game1.ScreenSize;
 			float u = _unit;
 
-			spriteBatch.DrawTextCentered("DChess", new Rectangle(0, (int)(1.0f * u), screen.X, (int)(2.2f * u)), 2.2f * u, Theme.Text);
-			spriteBatch.DrawTextCentered("Bot Arena", new Rectangle(0, (int)(3.1f * u), screen.X, (int)(0.9f * u)), 0.9f * u, Theme.TextDim);
+            spriteBatch.DrawTextCentered("DChess", new Rectangle(0, (int)(.6f * u), screen.X, (int)(1.8f * u)), 1.8f * u, Theme.Text);
+            spriteBatch.DrawTextCentered("Bot Arena", new Rectangle(0, (int)(2.5f * u), screen.X, (int)(.55f * u)), .55f * u, Theme.TextDim);
 
 			spriteBatch.DrawRectangle(_panel, Theme.Panel);
 

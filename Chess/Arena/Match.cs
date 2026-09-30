@@ -19,6 +19,10 @@ namespace DChess.Chess.Arena {
 
 		/// <summary>Games are a draw after this many half-moves.</summary>
 		public int MaxPlies { get; set; } = 500;
+        public GameConfiguration Configuration { get; set; } = new();
+        public bool UsePairedOpenings { get; set; }
+        public int OpeningSeed { get; set; }
+        public BoardState InitialPosition { get; set; }
 	}
 
 	/// <summary>
@@ -32,6 +36,7 @@ namespace DChess.Chess.Arena {
 	public class Match {
 		private readonly object _lock = new();
 		private readonly List<GameRecord> _games = new();
+        private readonly Dictionary<GameRecord, SavedGame> _savedGames = new();
 		private readonly CancellationTokenSource _cancellation = new();
 		private readonly double[] _scores = new double[2];
 		private readonly int[] _wins = new int[2];
@@ -49,14 +54,19 @@ namespace DChess.Chess.Arena {
 		private volatile bool _isFinished;
 		public bool IsFinished => _isFinished;
 		public bool IsCancelled => _cancellation.IsCancellationRequested;
+        public string Error { get; private set; }
+        private readonly bool _replayOnly;
+        private int _started;
 
 		/// <summary>Called on the match thread after every game.</summary>
 		public event Action<GameRecord> GameFinished;
 
-		public Match(MatchSettings settings, MatchState resume = null, Action<MatchState> autosave = null) {
+		public Match(MatchSettings settings, MatchState resume = null, Action<MatchState> autosave = null, bool replayOnly = false) {
 			Settings = settings;
 			_resume = resume;
 			_autosave = autosave;
+            _replayOnly = replayOnly;
+            _isFinished = replayOnly;
 			string name1 = settings.Player1.Name;
 			string name2 = settings.Player2.Name;
 			PlayerNames = name1 == name2
@@ -66,11 +76,12 @@ namespace DChess.Chess.Arena {
 				foreach (var savedGame in resume.Games) {
 					var record = savedGame.Restore();
 					_games.Add(record);
+                    if (record.IsFinished) _savedGames[record] = savedGame;
 					if (record.Result == GameResult.WhiteWins) { _scores[record.WhitePlayerIndex]++; _wins[record.WhitePlayerIndex]++; }
 					if (record.Result == GameResult.BlackWins) { _scores[1 - record.WhitePlayerIndex]++; _wins[1 - record.WhitePlayerIndex]++; }
 					if (record.Result == GameResult.Draw) { _scores[0] += 0.5; _scores[1] += 0.5; _draws++; }
 				}
-				_currentBoard = resume.Board?.Restore();
+                _currentBoard = replayOnly ? null : resume.Board?.Restore();
 			}
 		}
 
@@ -78,10 +89,17 @@ namespace DChess.Chess.Arena {
 			lock (_lock) return new MatchState {
 				Player1 = Settings.Player1.Name, Player2 = Settings.Player2.Name, GameCount = Settings.Games,
 				TimeLimitMilliseconds = Settings.TimeLimitMilliseconds, AlternateColors = Settings.AlternateColors,
-				MaxPlies = Settings.MaxPlies, Board = _currentBoard == null ? null : BoardState.Capture(_currentBoard),
-				Games = _games.Select(SavedGame.Capture).ToList()
+                MaxPlies = Settings.MaxPlies, Configuration = Settings.Configuration.Copy(), UsePairedOpenings = Settings.UsePairedOpenings,
+                OpeningSeed = Settings.OpeningSeed, InitialPosition = Settings.InitialPosition, Board = _currentBoard == null ? null : BoardState.Capture(_currentBoard),
+                Games = _games.Select(CaptureGame).ToList()
 			};
 		}
+        private SavedGame CaptureGame(GameRecord game) {
+            if (_savedGames.TryGetValue(game, out var saved)) return saved;
+            saved = SavedGame.Capture(game);
+            if (saved.Result != GameResult.Ongoing) _savedGames[game] = saved;
+            return saved;
+        }
 
 		private void saveProgress() {
 			if (!IsCancelled) _autosave?.Invoke(CaptureState());
@@ -112,6 +130,7 @@ namespace DChess.Chess.Arena {
 		}
 
 		public void Start() {
+            if (_replayOnly || Interlocked.Exchange(ref _started, 1) != 0) throw new InvalidOperationException("Match cannot be started twice or run from an archive.");
 			var thread = new Thread(Run) { IsBackground = true, Name = "Match" };
 			thread.Start();
 		}
@@ -124,6 +143,7 @@ namespace DChess.Chess.Arena {
 		}
 
 		public void Run() {
+            if (_replayOnly) throw new InvalidOperationException("Archived matches are read-only.");
 			try {
 				int start = _games.Count;
 				if (start > 0 && !_games[^1].IsFinished) start--;
@@ -153,6 +173,7 @@ namespace DChess.Chess.Arena {
 				}
 			}
 			catch (Exception e) {
+                Error = e.Message;
 				Console.WriteLine($"Match crashed: {e}");
 			}
 			finally {
@@ -168,12 +189,23 @@ namespace DChess.Chess.Arena {
 			string[] names = { PlayerNames[whiteIndex], PlayerNames[1 - whiteIndex] };
 
 			bool resuming = _resume != null && gameIndex < _games.Count && !_games[gameIndex].IsFinished;
-			var record = resuming ? _games[gameIndex] : new GameRecord(gameIndex + 1, names[0], names[1], whiteIndex);
-			Board board = resuming ? _currentBoard : BoardSetup.CreateStandardBoard();
+            var initialBoard = Settings.InitialPosition?.Restore() ?? Settings.Configuration.CreateBoard();
+            var opening = Settings.UsePairedOpenings ? OpeningBook.Select(initialBoard, gameIndex / 2, Settings.OpeningSeed)
+                : new OpeningLine("Start position", Array.Empty<string>());
+            var record = resuming ? _games[gameIndex] : new GameRecord(gameIndex + 1, names[0], names[1], whiteIndex,
+                Settings.Configuration.Copy(), opening.Name, opening.Moves.Length, Settings.TimeLimitMilliseconds);
+            Board board = resuming ? _currentBoard : initialBoard;
 			lock (_lock) {
 				_currentBoard = board;
 				if (!resuming) {
 					record.AddPosition(new PositionSnapshot(board, null, null, 0));
+                    foreach (string text in opening.Moves) {
+                        var legal = board.GetAllLegalMovesForTeam(board.GetTurnTeamType());
+                        var move = OpeningBook.FindMove(board, text) ?? throw new InvalidOperationException("Opening no longer matches its variant configuration.");
+                        string notation = MoveNotation.Describe(move, legal);
+                        board.MakeMove(move);
+                        record.AddPosition(new PositionSnapshot(board, board.GetLastMove(), notation, 0));
+                    }
 					_games.Add(record);
 				}
 			}
@@ -211,15 +243,24 @@ namespace DChess.Chess.Arena {
 				}
 
 				// Re-evaluate terminal rules before asking the next player, also after a resume.
-				TeamType winner = board.HasTeamWon();
+                var outcome = board.Variants.Select(v => v.GetOutcome(board)).FirstOrDefault(o => o != null);
+                if (outcome != null) {
+                    if (outcome.Result is GameResult.Ongoing or GameResult.Aborted) throw new InvalidOperationException("Variant outcomes must be a win or draw.");
+                    record.Finish(outcome.Result, outcome.Reason); break;
+                }
+                if (!board.Pieces.Values.Any(p => p.Type == PieceType.King)) {
+                    record.Finish(GameResult.Draw, "both kings removed"); break;
+                }
+                TeamType winner = board.HasTeamWon();
 				if (winner != TeamType.None) {
 					record.Finish(winner == TeamType.White ? GameResult.WhiteWins : GameResult.BlackWins, "captured the king");
 					break;
 				}
-				string drawReason = pliesWithoutProgress >= 100 ? "50 moves without capture or pawn move"
-					: repetitions.GetValueOrDefault(board.GetPositionKey()) >= 3 ? "threefold repetition"
-					: isInsufficientMaterial(board) ? "insufficient material"
-					: board.GetMoveCount() >= Settings.MaxPlies ? $"move limit reached ({Settings.MaxPlies / 2} moves)"
+                bool standardDraws = board.Variants.All(v => v.UseStandardDrawRules);
+                string drawReason = standardDraws && pliesWithoutProgress >= 100 ? "50 moves without capture or pawn move"
+                    : standardDraws && repetitions.GetValueOrDefault(board.GetPositionKey()) >= 3 ? "threefold repetition"
+                    : standardDraws && isInsufficientMaterial(board) ? "insufficient material"
+                    : board.GetMoveCount() - record.OpeningPlies >= Settings.MaxPlies ? $"move limit reached ({Settings.MaxPlies / 2} moves)"
 					: null;
 				if (drawReason != null) { record.Finish(GameResult.Draw, drawReason); break; }
 				saveProgress();

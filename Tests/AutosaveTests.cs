@@ -150,6 +150,20 @@ namespace DChess.Tests {
             } finally { match.Cancel(); }
         }
 
+        [TestMethod]
+        public void Valid_json_with_an_invalid_board_recovers_the_previous_save() {
+            string path = Path.Combine(Path.GetTempPath(), "dchess-invalid-board-" + Guid.NewGuid().ToString("N") + ".json");
+            try {
+                var store = new AutosaveStore(path);
+                var session = new SessionState { Mode = "sandbox", Board = BoardState.Capture(BoardSetup.CreateStandardBoard()) };
+                Assert.IsTrue(store.Save(session)); Assert.IsTrue(store.Save(session));
+                session.Board.Width = -1;
+                File.WriteAllText(path, JsonSerializer.Serialize(session));
+                Assert.AreEqual(8, store.Load().Board.Width);
+                StringAssert.Contains(store.LastError, "Recovered");
+            } finally { foreach (string suffix in new[] { "", ".bak", ".tmp" }) File.Delete(path + suffix); }
+        }
+
         private static void WaitFor(Func<bool> condition) => Assert.IsTrue(SpinWait.SpinUntil(condition, TimeSpan.FromSeconds(5)), "Timed out waiting for the match.");
     }
 }

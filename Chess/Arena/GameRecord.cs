@@ -69,6 +69,10 @@ namespace DChess.Chess.Arena {
 
 		/// <summary>Index (0 or 1) of the match player that plays white.</summary>
 		public int WhitePlayerIndex { get; }
+        public GameConfiguration Configuration { get; }
+        public string OpeningName { get; }
+        public int OpeningPlies { get; }
+        public int TimeLimitMilliseconds { get; }
 
 		private volatile GameResult _result = GameResult.Ongoing;
 		public GameResult Result => _result;
@@ -76,7 +80,10 @@ namespace DChess.Chess.Arena {
 
 		public bool IsFinished => Result != GameResult.Ongoing;
 
-		public GameRecord(int number, string whiteName, string blackName, int whitePlayerIndex) {
+		public GameRecord(int number, string whiteName, string blackName, int whitePlayerIndex, GameConfiguration configuration = null,
+            string openingName = "Start position", int openingPlies = 0, int timeLimitMilliseconds = 0) {
+            Configuration = configuration ?? new();
+            OpeningName = openingName; OpeningPlies = openingPlies; TimeLimitMilliseconds = timeLimitMilliseconds;
 			Number = number;
 			WhiteName = whiteName;
 			BlackName = blackName;

@@ -16,6 +16,9 @@ namespace DChess.Chess.Variants {
 	/// to ensure proper board cloning for AI purposes.
 	/// </summary>
 	public abstract class Variant {
+        public virtual void ConfigureInitialBoard(Board board) { }
+        public virtual bool UseStandardDrawRules => true;
+        public virtual DChess.Chess.Arena.VariantOutcome GetOutcome(Board board) => null;
 
 		public virtual bool IsPieceEnemyTeam(bool normalResult, Piece piece) {
 			return normalResult;

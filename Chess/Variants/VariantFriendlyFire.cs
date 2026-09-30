@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace DChess.Chess.Variants {
 	public class VariantFriendlyFire : Variant {
+        public override bool UseStandardDrawRules => false;
 
 		public override bool IsPieceEnemyTeam(bool normalResult, Piece piece) {
 			if (piece == null) return false;
