@@ -109,7 +109,9 @@ namespace DChess.Util
 
 			float windowHeight = _graphics.PreferredBackBufferHeight;
 
-			float scale = (windowHeight * 0.9f) / boardWidthNoScale;
+            float windowWidth = _graphics.PreferredBackBufferWidth;
+            float scale = Math.Min((windowHeight * 0.9f) / boardWidthNoScale,
+                Math.Max(1, windowWidth - 90) / (_board.Size.x * SquareSize));
 			return MathHelper.Clamp(scale, _minScale, _maxScale);
 		}
 

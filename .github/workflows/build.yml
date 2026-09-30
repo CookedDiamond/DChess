@@ -15,5 +15,6 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
+      - run: ./scripts/Install-Stockfish.ps1
       - run: dotnet build DChess.sln -c Release --warnaserror
       - run: dotnet test DChess.sln -c Release --no-build

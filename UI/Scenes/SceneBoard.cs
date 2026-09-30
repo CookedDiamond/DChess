@@ -4,6 +4,7 @@ using DChess.Chess.Playground;
 using DChess.Extensions;
 using DChess.Util;
 using DChess.Persistence;
+using DChess.UI.Analysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -26,6 +27,9 @@ namespace DChess.UI.Scenes
 		private readonly Board _board;
 		private readonly BoardManager _boardManager;
 		private readonly string _helperBotName;
+        private readonly StockfishEvaluation _evaluation = new();
+        private long _analysisRevision = -1;
+        private AnalysisPosition _analysisPosition;
 
 		public SceneBoard(Game1 game, BotInfo helperBot, int botTimeLimitMilliseconds, Board restoredBoard = null, bool resumeBotMove = false) {
 			_game = game;
@@ -63,6 +67,11 @@ namespace DChess.UI.Scenes
 
 		public override void Update(GameTime gameTime) {
 			_boardManager.UpdateComputerMove();
+            if (_analysisRevision != _board.Revision) {
+                _analysisRevision = _board.Revision;
+                _analysisPosition = AnalysisPosition.FromBoard(_board);
+            }
+            _evaluation.Update(_analysisPosition);
 			// Computer move
 			if (_boardManager.GetComputerPlayerTeamType() != null
 				&& _boardManager.GetComputerPlayerTeamType() == _board.GetTurnTeamType()) {
@@ -89,6 +98,10 @@ namespace DChess.UI.Scenes
 
 		public override void Draw(SpriteBatch spriteBatch) {
 			_boardUI.Draw(spriteBatch);
+            var scale = ScalingUtil.Instance;
+            EvaluationBar.Draw(spriteBatch, new Rectangle((int)scale.CenterOffsetX, (int)scale.CenterOffsetY,
+                (int)(_board.Size.x * scale.SquareSize * scale.Scale),
+                (int)(_board.Size.y * scale.SquareSize * scale.Scale)), false, _evaluation, statusBelow: false);
 			float lineHeight = Game1.ScreenSize.Y / 30f;
 			spriteBatch.DrawTextLine($"Moves: {_board.GetMoveCount()}", new Vector2(10, 10), lineHeight, Color.White);
 
@@ -110,6 +123,6 @@ namespace DChess.UI.Scenes
 			BotMovePending = _boardManager.HasPendingComputerMove
 		};
 
-		public void Stop() => _boardManager.CancelComputerMove();
+        public void Stop() { _boardManager.CancelComputerMove(); _evaluation.Dispose(); }
 	}
 }

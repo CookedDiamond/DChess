@@ -4,6 +4,7 @@ using DChess.Chess.Playground;
 using DChess.Extensions;
 using DChess.Util;
 using DChess.Persistence;
+using DChess.UI.Analysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -23,6 +24,9 @@ namespace DChess.UI.Scenes {
 		private readonly Game1 _game;
 		private readonly Match _match;
 		private readonly SnapshotBoardRenderer _renderer = new();
+        private readonly StockfishEvaluation _evaluation = new();
+        private PositionSnapshot _analysisSnapshot;
+        private AnalysisPosition _analysisPosition;
 
 		// What is shown.
 		private int _gameIndex;
@@ -75,6 +79,7 @@ namespace DChess.UI.Scenes {
 		/// <summary>Stops the match (bots finish their current move in the background).</summary>
 		public void Stop() {
 			_match.Cancel();
+            _evaluation.Dispose();
 		}
 
 		public MatchState CaptureState() => _match.CaptureState();
@@ -355,14 +360,14 @@ namespace DChess.UI.Scenes {
 
 			int centerX = _leftPanel.Right + margin;
 			int centerWidth = _rightPanel.X - margin - centerX;
-			int boardSize = Math.Max(8, Math.Min(centerWidth, screen.Y - 2 * margin - 2 * labelHeight - controlsHeight - 2 * gap));
-			int boardX = centerX + (centerWidth - boardSize) / 2;
+            int boardSize = Math.Max(8, Math.Min(centerWidth - 44, screen.Y - 2 * margin - 2 * labelHeight - controlsHeight - 2 * gap - 22));
+            int boardX = centerX + 44 + (centerWidth - 44 - boardSize) / 2;
 
 			int y = margin;
 			_topLabel = new Rectangle(boardX, y, boardSize, labelHeight);
 			y += labelHeight + gap / 2;
 			_boardArea = new Rectangle(boardX, y, boardSize, boardSize);
-			y += boardSize + gap / 2;
+            y += boardSize + gap / 2 + 22;
 			_bottomLabel = new Rectangle(boardX, y, boardSize, labelHeight);
 			y += labelHeight + gap;
 
@@ -415,6 +420,11 @@ namespace DChess.UI.Scenes {
 			PositionSnapshot snapshot = game.GetPosition(_ply);
 
 			// Show the human's own side at the bottom.
+            if (_analysisSnapshot != snapshot) {
+                _analysisSnapshot = snapshot;
+                _analysisPosition = AnalysisPosition.FromGame(game, _ply);
+            }
+            _evaluation.Update(_analysisPosition);
 			bool humanIsBlackOnly = _match.Settings.Player1.IsHuman != _match.Settings.Player2.IsHuman
 				&& (game.WhitePlayerIndex == 0 ? _match.Settings.Player2.IsHuman : _match.Settings.Player1.IsHuman);
 			_renderer.Flipped = humanIsBlackOnly != _manualFlip;
@@ -423,6 +433,7 @@ namespace DChess.UI.Scenes {
 			_renderer.Draw(spriteBatch, snapshot,
 				interactive ? _selectedSquare : null,
 				interactive ? _selectedMoves.Select(m => m.To) : null);
+            EvaluationBar.Draw(spriteBatch, _renderer.BoardRectangle(snapshot), _renderer.Flipped, _evaluation);
 
 			TeamType topTeam = _renderer.Flipped ? TeamType.White : TeamType.Black;
 			drawPlayerLabel(spriteBatch, _topLabel, game, topTeam, interactive);

@@ -17,8 +17,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Tests/**" />
+    <Compile Remove="Engines/**" />
     <None Remove="Tests/**" />
     <EmbeddedResource Remove="Tests/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Engines/Stockfish/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Engines/Stockfish/*.zip;Engines/Stockfish/stockfish/*.exe" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.5.1" />

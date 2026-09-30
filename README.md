@@ -50,6 +50,32 @@ board in the background, so drawing, resizing, menu controls, and replay remain 
 Sandbox bot requests also run in the background. Moving, undoing, or leaving the board
 cancels the request; its result cannot overwrite a newer position.
 
+## Stockfish evaluation
+
+Install the official Stockfish 19 Windows x64 engine once before building:
+
+```powershell
+./scripts/Install-Stockfish.ps1
+dotnet build DChess.sln -c Release
+```
+
+The installer checks the release SHA256. Downloaded engine files are ignored by Git;
+build/publish copies the executable, GPL license, and supplied source into the output.
+Source and releases: https://github.com/official-stockfish/Stockfish/releases/tag/sf_19.
+
+The sandbox and arena show a white/black evaluation bar for the displayed position,
+including replay. Positive scores favor White; negative scores favor Black; M means mate.
+The bar flips with the arena board. Searches run in a separate background process with
+one engine thread and a short time budget; changing positions or closing the scene cancels
+old work. Missing engines and unsupported positions show N/A without interrupting play.
+
+This is a **standard chess estimate**: DChess uses king capture and has no en passant.
+Custom boards, disabled squares, unsupported variants, missing kings, and positions where
+the nonmoving king is attacked are not evaluated. The bar is an advantage display, not
+a calibrated winning probability. BotBoard/BotTimer expose neither Stockfish nor scores;
+analysis stays private to the UI and is excluded from game records and autosaves.
+This provides bot API isolation; in-process bot code is not an OS security sandbox.
+
 ## Autosave and resume
 
 Sandbox games and arena matches are saved after each move and when returning to the menu
