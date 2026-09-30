@@ -23,12 +23,8 @@ namespace DChess.Cli {
         private bool _running = true;
 
         // Variant registry — extend here when adding a new variant.
-        private static readonly Dictionary<string, Func<Variant>> VariantFactory = new(StringComparer.OrdinalIgnoreCase) {
-            ["promotion"]    = () => new VariantPawnQueenPromotion(),
-            ["friendlyfire"] = () => new VariantFriendlyFire(),
-            ["battleroyale"] = () => new VariantBattleRoyale(15, 1f),
-            ["castling"]     = () => new VariantCastling(),
-        };
+        private static readonly Dictionary<string, Func<Variant>> VariantFactory = VariantRegistry.All.ToDictionary(
+            d => d.Id, d => new Func<Variant>(() => d.Restore(new DChess.Persistence.VariantState { Kind = d.Id })), StringComparer.OrdinalIgnoreCase);
 
         public CliRunner(List<string> variants, string preset, int boardSize) {
             if (boardSize < 4 || boardSize > 26) throw new ArgumentOutOfRangeException(nameof(boardSize), "Board size must be between 4 and 26.");

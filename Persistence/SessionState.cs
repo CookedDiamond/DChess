@@ -36,13 +36,17 @@ namespace DChess.Persistence {
         }
     }
 
-    public sealed class MatchState {
+	public sealed class MatchState {
         public string Player1 { get; set; }
         public string Player2 { get; set; }
         public int GameCount { get; set; }
         public int TimeLimitMilliseconds { get; set; }
         public bool AlternateColors { get; set; }
         public int MaxPlies { get; set; }
+        public GameConfiguration Configuration { get; set; } = new();
+        public bool UsePairedOpenings { get; set; }
+        public int OpeningSeed { get; set; }
+        public BoardState InitialPosition { get; set; }
         public BoardState Board { get; set; }
         public List<SavedGame> Games { get; set; } = new();
 
@@ -53,9 +57,16 @@ namespace DChess.Persistence {
                 throw new InvalidDataException("Invalid saved match settings.");
             if (Games.Count > 0 && Games[^1].Result == GameResult.Ongoing && Board == null)
                 throw new InvalidDataException("Saved match is missing its current board.");
+            Configuration.CreateBoard();
             return new MatchSettings { Player1 = player1, Player2 = player2, Games = GameCount,
-                TimeLimitMilliseconds = TimeLimitMilliseconds, AlternateColors = AlternateColors, MaxPlies = MaxPlies };
+                TimeLimitMilliseconds = TimeLimitMilliseconds, AlternateColors = AlternateColors, MaxPlies = MaxPlies,
+                Configuration = Configuration.Copy(), UsePairedOpenings = UsePairedOpenings, OpeningSeed = OpeningSeed, InitialPosition = InitialPosition };
         }
+        public Match CreateReplay() => new(new MatchSettings {
+            Player1 = new BotInfo(Player1, null), Player2 = new BotInfo(Player2, null), Games = GameCount,
+            TimeLimitMilliseconds = TimeLimitMilliseconds, MaxPlies = MaxPlies, AlternateColors = AlternateColors,
+            Configuration = Configuration, UsePairedOpenings = UsePairedOpenings, OpeningSeed = OpeningSeed, InitialPosition = InitialPosition
+        }, this, replayOnly: true);
     }
 
     public sealed class SavedGame {
@@ -65,17 +76,23 @@ namespace DChess.Persistence {
         public int WhitePlayerIndex { get; set; }
         public GameResult Result { get; set; }
         public string ResultReason { get; set; }
+        public GameConfiguration Configuration { get; set; } = new();
+        public string OpeningName { get; set; } = "Start position";
+        public int OpeningPlies { get; set; }
+        public int TimeLimitMilliseconds { get; set; }
         public List<SnapshotState> Positions { get; set; } = new();
 
         public static SavedGame Capture(GameRecord game) => new() {
             Number = game.Number, WhiteName = game.WhiteName, BlackName = game.BlackName,
-            WhitePlayerIndex = game.WhitePlayerIndex, Result = game.Result, ResultReason = game.ResultReason,
+            WhitePlayerIndex = game.WhitePlayerIndex, Result = game.Result, ResultReason = game.ResultReason, Configuration = game.Configuration,
+            OpeningName = game.OpeningName, OpeningPlies = game.OpeningPlies, TimeLimitMilliseconds = game.TimeLimitMilliseconds,
             Positions = Enumerable.Range(0, game.PositionCount).Select(i => SnapshotState.Capture(game.GetPosition(i))).ToList()
         };
         public GameRecord Restore() {
             if (WhitePlayerIndex is not (0 or 1) || !Enum.IsDefined(Result) || Positions.Count == 0)
                 throw new InvalidDataException("Invalid saved game.");
-            var game = new GameRecord(Number, WhiteName, BlackName, WhitePlayerIndex);
+            if (OpeningPlies < 0 || OpeningPlies >= Positions.Count) throw new InvalidDataException("Invalid saved opening length.");
+            var game = new GameRecord(Number, WhiteName, BlackName, WhitePlayerIndex, Configuration, OpeningName, OpeningPlies, TimeLimitMilliseconds);
             foreach (var position in Positions) game.AddPosition(position.Restore());
             if (Result != GameResult.Ongoing) game.Finish(Result, ResultReason);
             return game;

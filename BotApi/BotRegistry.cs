@@ -44,6 +44,13 @@ namespace DChess.BotApi {
 			return AllPlayers.FirstOrDefault(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase))
 				?? AllPlayers.FirstOrDefault(b => string.Equals(b.Type.Name, name, StringComparison.OrdinalIgnoreCase));
 		}
+        public static void Register(BotInfo bot) {
+            if (bot.IsHuman || bot.Type == null || !typeof(IChessBot).IsAssignableFrom(bot.Type) ||
+                bot.Type.GetConstructor(Type.EmptyTypes) == null || Bots.Any(b => b.Name == bot.Name))
+                throw new ArgumentException("Register a unique bot with a public parameterless constructor.");
+            _bots.Add(bot);
+            _bots.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.Name, b.Name));
+        }
 
 		private static List<BotInfo> discoverBots() {
 			var types = Assembly.GetExecutingAssembly().GetTypes()

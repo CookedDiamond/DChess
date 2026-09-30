@@ -107,19 +107,8 @@ namespace DChess.Persistence {
         public string Kind { get; set; }
         public int Parameter { get; set; }
         public float Strength { get; set; }
-        public static VariantState Capture(Variant variant) => variant switch {
-            VariantCastling c => new() { Kind = "castling", Parameter = c.CastlingDistance },
-            VariantBattleRoyale b => new() { Kind = "battleroyale", Parameter = b.Interval, Strength = b.Strength },
-            VariantPawnQueenPromotion => new() { Kind = "promotion" },
-            VariantFriendlyFire => new() { Kind = "friendlyfire" },
-            _ => throw new InvalidDataException($"Cannot save variant {variant.GetType().Name}.")
-        };
-        public Variant Restore() => Kind switch {
-            "castling" => new VariantCastling(Parameter),
-            "battleroyale" => new VariantBattleRoyale(Parameter, Strength),
-            "promotion" => new VariantPawnQueenPromotion(),
-            "friendlyfire" => new VariantFriendlyFire(),
-            _ => throw new InvalidDataException($"Unknown saved variant '{Kind}'.")
-        };
+        public Dictionary<string, string> Parameters { get; set; } = new();
+        public static VariantState Capture(Variant variant) => VariantRegistry.Capture(variant);
+        public Variant Restore() => VariantRegistry.Restore(this);
     }
 }

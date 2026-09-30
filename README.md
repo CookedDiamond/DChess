@@ -50,6 +50,57 @@ board in the background, so drawing, resizing, menu controls, and replay remain 
 Sandbox bot requests also run in the background. Moving, undoing, or leaving the board
 cancels the request; its result cannot overwrite a newer position.
 
+## Tournaments
+
+Choose **Tournaments & history** in the menu, then **New tournament**. Select 2, 4, 8,
+16, 32, or 64 entrants, an even number of games per pairing, the time per move, and the
+move limit. Each seed has a bot selector; duplicate entries are allowed and are identified
+by their seed number. Enable any combination of the registered variants, including
+promotion, castling, friendly fire, and battle royale. With none selected, games use the
+base king-capture rules.
+
+Adjacent seeds play each other in a knockout bracket. Winners advance through the
+quarter-finals, semi-finals, and final as appropriate. All pairings share the same settings
+and starting-position template. Every opening is played twice with the bots swapping colors:
+
+- Games 1 and 2 use the starting position.
+- Later pairs begin after three full moves from a compatible book opening. The eight
+  included lines cover Italian, Ruy Lopez, Sicilian, French, Queen's Gambit, King's Indian,
+  Caro-Kann, and Scotch openings. The seed gives a repeatable opening order shared by
+  all pairings. Book moves remain visible in replay and do not consume bot thinking time.
+- A future variant with a different setup uses a deterministic legal opening if no book
+  line applies, or the starting position if six opening half-moves cannot be played.
+  The recorded opening name identifies that fallback.
+- A win awards 1 point, a draw 0.5, and a loss 0. A tied pairing gets extra opening pairs
+  with 20% less time per move each pair, down to 1 ms. It continues until one bot scores
+  at least 1.5 points in a tiebreak pair. There is no random winner selection.
+
+The results screen shows each pairing's winner, points, W/D/L, White/Black wins, average
+played half-moves, average time for completed bot moves, and game-ending reasons. Click a
+pairing and then a game to replay it, or watch the active pairing. Returning from the viewer
+keeps the tournament running. **Pause tournament** saves progress; **Resume tournament**
+continues an interrupted game and the remaining bracket. Persistent ties can be paused.
+
+**History** retains separate compressed archives in `%LOCALAPPDATA%\DChess\Tournaments`.
+Archives are saved after games and on pause/close using atomic replacement and backups.
+History writing runs on a separate worker at lower priority; completed snapshots are cached.
+The history list reads compact summaries and loads full game data only for a selected event.
+Results and replay remain viewable after a bot or variant is removed from the project;
+resuming play requires those implementations to be available. Normal game autosaves remain
+separate. A running app is not restarted or terminated by building this feature.
+
+### Adding a variant
+
+Implement `Variant`, then register one `VariantDefinition` in `VariantRegistry` before
+starting the UI or CLI. Its stable ID, display name, construction function, and state capture
+function supply tournament selection, board saves, and CLI variant selection together.
+Store extra parameters in `VariantState.Parameters`. No tournament-specific switch is needed.
+Implement `Clone()` for mutable state. `ConfigureInitialBoard` can customize the setup;
+tournaments freeze that setup once so both colors play identical configurations.
+Override `GetOutcome` for a different winning objective and set `UseStandardDrawRules` to
+false when orthodox repetition, 50-move, or insufficient-material draws do not apply.
+No-legal-move draws and the configured move limit still prevent unlimited individual games.
+
 ## Stockfish evaluation
 
 Install the official Stockfish 19 Windows x64 engine once before building:
@@ -133,6 +184,9 @@ Automated tests (`Tests/`) cover movement, captures, promotion, castling, varian
 
 They also cover save/reload and backup recovery, resuming a human match, cancellation of
 stale bot results, UI-thread move commits, and immediate human-move display during bot calculation.
+Tournament tests cover bracket advancement, paired openings, repeated faster tiebreaks,
+variant configuration and future outcome hooks, resumable tournaments, history backup
+recovery, archive replay without the original bots, and separation from Stockfish analysis.
 
 ## Multiplayer
 

@@ -79,7 +79,16 @@ Content/                   MGCB content (textures, fonts)
 
 1. Subclass `Variant` in `Chess/Variants/`.
 2. Override the relevant hooks; implement `Clone()` if it carries state.
-3. Register it on the board (`board.Variants.Add(new MyVariant())`) — in `Chess/Arena/BoardSetup.cs` for arena and sandbox games, and add a `--variant` flag mapping in `Cli/CliRunner.cs` so subagents can enable it from the command line.
+3. Register one `VariantDefinition` in `Chess/Variants/VariantRegistry.cs` before startup, with a stable ID, display name, restore factory and state capture function. This supplies tournament selection, persistence, and CLI selection together. Extra parameters can use `VariantState.Parameters`.
+4. Override `ConfigureInitialBoard` for a different setup and `GetOutcome` for a different objective. Set `UseStandardDrawRules` to false when orthodox draw rules do not apply. Tournaments freeze the initial setup and validate book openings against it.
+
+## Tournaments
+
+- `Chess/Arena/Tournament.cs` runs sequential knockout pairings on a background worker, with an even game count and alternating colors. The first opening pair uses the initial position; later pairs use six book half-moves from `OpeningBook`. Ties get color-paired extra games with 20% less time each pair (minimum 1 ms) until one side scores at least 1.5 points in that pair. No lottery winner.
+- `Persistence/TournamentStore.cs` keeps one compressed, atomic archive per tournament, with a backup. A worker at lower priority coalesces writes; completed replay snapshots are cached. Pause/close saves an ongoing game before cancellation and exit flushes pending history writes.
+- `UI/Scenes/SceneTournaments.cs` supplies setup, bracket results, statistics, history and replay links. The tournament is owned by `Game1`, independently of the current scene. `SceneArena.OwnsMatch` is false for tournament viewers, so leaving one must not cancel the tournament or overwrite the normal autosave.
+- Archive replay must work without the original bot or variant. Construct it through `MatchState.CreateReplay`, which does not restore a live rules board or start a bot.
+- During parallel bot development, leave existing processes and `Bots/` changes untouched. Use `dotnet build DChess.sln --artifacts-path bin/tournament-verification` for an isolated build. GUI smoke checks can use `--smoke-test tournaments`, `tournament-live`, `tournament-history`, `tournament-results`, or `tournament-replay`; archive screens accept `--smoke-archive-dir`, and `--smoke-capture` exports the rendered frame.
 
 ## Adding a bot
 

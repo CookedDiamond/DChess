@@ -20,6 +20,13 @@ if (ConsoleArena.IsArenaCommand(args)) {
 // "--smoke-test" draws ten frames and exits (checks that content loads and rendering works).
 int smokeIndex = Array.IndexOf(args, "--smoke-test");
 string smokeScene = smokeIndex >= 0 && smokeIndex + 1 < args.Length ? args[smokeIndex + 1] : null;
-using var game = new Game1(smokeIndex >= 0 ? 10 : 0, smokeScene);
+string SmokeOption(string name) {
+    int index = Array.IndexOf(args, name);
+    return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+}
+var smokeSize = SmokeOption("--smoke-size")?.Split('x');
+Microsoft.Xna.Framework.Point? windowSize = smokeSize?.Length == 2
+    ? new Microsoft.Xna.Framework.Point(int.Parse(smokeSize[0]), int.Parse(smokeSize[1])) : null;
+using var game = new Game1(smokeIndex >= 0 ? 10 : 0, smokeScene, SmokeOption("--smoke-capture"), SmokeOption("--smoke-archive-dir"), windowSize);
 game.Run();
 return 0;

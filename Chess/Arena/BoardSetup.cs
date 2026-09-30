@@ -9,11 +9,7 @@ namespace DChess.Chess.Arena {
 	/// </summary>
 	public static class BoardSetup {
 		public static Board CreateStandardBoard() {
-			var board = new Board(new Vector2Int(8, 8));
-			board.Variants.Add(new VariantPawnQueenPromotion());
-			board.Variants.Add(new VariantCastling(2));
-			PlaceStandardPieces(board);
-			return board;
+            return new GameConfiguration().CreateBoard();
 		}
 
 		public static void PlaceStandardPieces(Board board) {

@@ -52,10 +52,19 @@ public class StockfishTests {
     public void StockfishIsNotExportedToBots() {
         Assert.IsFalse(typeof(StockfishEvaluation).IsPublic);
         Assert.IsFalse(typeof(EvaluationScore).IsPublic);
-        foreach (var type in new[] { typeof(BotBoard), typeof(BotTimer), typeof(Board), typeof(PositionSnapshot) }) {
+        foreach (var type in new[] { typeof(BotBoard), typeof(BotTimer), typeof(Board), typeof(PositionSnapshot), typeof(TournamentState), typeof(PairingStatistics) }) {
             Assert.IsFalse(type.GetMembers().Any(m => m.Name.Contains("Stockfish", StringComparison.OrdinalIgnoreCase)));
             Assert.IsFalse(type.GetProperties().Any(p => p.PropertyType == typeof(EvaluationScore)));
         }
+    }
+
+    [TestMethod]
+    public void VariantTournamentReplayDoesNotUseStandardStockfishScores() {
+        var configuration = new GameConfiguration { Variants = new() { new() { Kind = "friendlyfire" } } };
+        var record = new GameRecord(1, "white", "black", 0, configuration);
+        record.AddPosition(new PositionSnapshot(configuration.CreateBoard(), null, null, 0));
+        Assert.IsNull(AnalysisPosition.FromGame(record, 0).Fen);
+        Assert.AreEqual("Unsupported variant", AnalysisPosition.FromGame(record, 0).Unavailable);
     }
 
     [TestMethod]
