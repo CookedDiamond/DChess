@@ -1,5 +1,6 @@
-﻿using DChess.Chess.Playground;
+using DChess.Chess.Playground;
 using DChess.Util;
+using DChess.Chess.Pieces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 namespace DChess.Multiplayer
 {
     public class ByteConverter {
+		public const int MOVE_LENGTH = 16;
 		public static readonly int INT_LENGTH = 4;
 
 		public static byte[] ToBytes(int i) {
@@ -33,17 +35,19 @@ namespace DChess.Multiplayer
 		}
 
 		public static byte[] ToBytes(Move move) {
-			List<byte> result = new();
-			//result.AddRange(ToBytes(move.origin));
-			//result.AddRange(ToBytes(move.destination));
-			return result.ToArray();
+			var origin = move.Changes.First(c => c.oldPiece != Piece.NULL_PIECE && c.newPiece == Piece.NULL_PIECE);
+			var destination = move.Changes.First(c => c.newPiece == origin.oldPiece);
+			return ToBytes(origin.boardPosition).Concat(ToBytes(destination.boardPosition)).ToArray();
 		}
 
-		public static Move ToMove(byte[] bytes) {
+		public static Move ToMove(byte[] bytes, Board board) {
+			if (bytes.Length != MOVE_LENGTH) throw new ArgumentException("A move must contain exactly 16 bytes.", nameof(bytes));
 			var origin = ToVector2Int(bytes.Take(INT_LENGTH * 2).ToArray());
 			var destination = ToVector2Int(bytes.Skip(INT_LENGTH * 2).Take(INT_LENGTH * 2).ToArray());
 
-			return new Move();
+			var piece = board.GetPiece(origin);
+			if (piece == Piece.NULL_PIECE || piece.Team != board.GetTurnTeamType()) return null;
+			return piece.GetMove(origin, destination);
 		}
 	}
 }

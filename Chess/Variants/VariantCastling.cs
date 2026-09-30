@@ -1,4 +1,4 @@
-﻿using DChess.Chess.Pieces;
+using DChess.Chess.Pieces;
 using DChess.Chess.Playground;
 using DChess.Util;
 using System;
@@ -11,25 +11,26 @@ namespace DChess.Chess.Variants {
 	public class VariantCastling: Variant {
 		private readonly int castlingDistance;
 
-		public VariantCastling(int castlingDistance)
+		public VariantCastling(int castlingDistance = 2)
 		{
+			if (castlingDistance < 2) throw new ArgumentOutOfRangeException(nameof(castlingDistance));
 			this.castlingDistance = castlingDistance;
 		}
 
 		public override List<Move> AdditionalMoves(Board board, Piece kingPiece, Vector2Int position) {
 			if (kingPiece.Type != PieceType.King) return null;
 			if (kingPiece.MoveCount > 0) return null;
-			if (position.x < castlingDistance || position.x > board.Size.x - castlingDistance) return null;
 			List<Move> resultMoves = new ();
 			int xPos = position.x;
-			
+
 			// - direction
 			for (int x = xPos - 1; x >= 0; x--) {
+				if (!board.IsValidPosition(new Vector2Int(x, position.y))) break;
 				var sidePiece = board.GetPiece(new Vector2Int(x, position.y));
 
 				if (sidePiece.Type == PieceType.Rook
 					&& sidePiece.MoveCount == 0
-					&& sidePiece.Team == kingPiece.Team) {
+					&& sidePiece.Team == kingPiece.Team && x < xPos - castlingDistance) {
 					resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, -1));
 				}
 				if (sidePiece != Piece.NULL_PIECE) {
@@ -37,12 +38,13 @@ namespace DChess.Chess.Variants {
 				}
 			}
 			// + direction
-			for (int x = xPos + 1; x < board.Size.x; x++) { 
+			for (int x = xPos + 1; x < board.Size.x; x++) {
+				if (!board.IsValidPosition(new Vector2Int(x, position.y))) break;
 				var sidePiece = board.GetPiece(new Vector2Int(x, position.y));
 
 				if (sidePiece.Type == PieceType.Rook
 					&& sidePiece.MoveCount == 0
-					&& sidePiece.Team == kingPiece.Team) {
+					&& sidePiece.Team == kingPiece.Team && x > xPos + castlingDistance) {
 					resultMoves.Add(castlingMove(position, board, kingPiece, sidePiece, x, 1));
 				}
 				if (sidePiece != Piece.NULL_PIECE) {

@@ -9,7 +9,8 @@ namespace DChess.Chess.Playground
 	/// <summary>
 	/// A move is a list of square changes (old piece -> new piece).
 	/// A normal move has two changes: the origin square is emptied and the destination gets the piece.
-	/// Castling has four changes, promotion adds one more change after the move was made.
+	/// Castling has four changes, promotion adds one more change after the move was made
+	/// and variants can also change squares (e.g. disable them).
 	/// </summary>
 	public class Move
 	{
@@ -36,17 +37,11 @@ namespace DChess.Chess.Playground
 		{
 			foreach (var change in Changes)
 			{
-				applyChange(board, change);
+				board.PlacePiece(change.boardPosition, change.newPiece);
+				if (change.newSquare.HasValue)
+					board.SquareMap[change.boardPosition.x, change.boardPosition.y] = change.newSquare.Value;
 			}
-		}
-
-		/// <summary>
-		/// Adds a change to this (already applied) move and applies it to the board.
-		/// </summary>
-		public void AddAndApplyChange(Board board, BoardChange change)
-		{
-			Changes.Add(change);
-			applyChange(board, change);
+			foreach (var piece in movingPieces()) piece.MoveCount++;
 		}
 
 		public void Undo(Board board)
@@ -54,28 +49,49 @@ namespace DChess.Chess.Playground
 			foreach (var change in Changes.Reverse<BoardChange>())
 			{
 				board.PlacePiece(change.boardPosition, change.oldPiece);
-
-				if (leavesSquare(change))
-				{
-					change.oldPiece.MoveCount -= 1;
-				}
+				if (change.oldSquare.HasValue)
+					board.SquareMap[change.boardPosition.x, change.boardPosition.y] = change.oldSquare.Value;
 			}
+			foreach (var piece in movingPieces()) piece.MoveCount--;
 		}
 
-		private static void applyChange(Board board, BoardChange change)
+		// A piece moves when it leaves its square and is placed on another square of the same move
+		// (pieces removed by a variant, e.g. with a disabled square, do not count as moved).
+		// Plain loops instead of LINQ: this runs for every move a bot makes or undoes while searching.
+		private List<Piece> movingPieces()
 		{
-			board.PlacePiece(change.boardPosition, change.newPiece);
-
-			if (leavesSquare(change))
+			List<Piece> pieces = new(2);
+			foreach (var change in Changes)
 			{
-				change.oldPiece.MoveCount += 1;
+				if (isMovingPieceLeaving(change) && !pieces.Contains(change.oldPiece)) pieces.Add(change.oldPiece);
 			}
+			return pieces;
 		}
 
-		// A piece counts as moved when it leaves its square. Apply and Undo must use the same rule.
-		private static bool leavesSquare(BoardChange change)
+		private bool isMovingPieceLeaving(BoardChange change)
 		{
-			return change.oldPiece != Piece.NULL_PIECE && change.newPiece == Piece.NULL_PIECE;
+			if (change.newPiece != Piece.NULL_PIECE || change.oldPiece == Piece.NULL_PIECE) return false;
+			foreach (var destination in Changes)
+			{
+				if (destination.newPiece == change.oldPiece) return true;
+			}
+			return false;
+		}
+
+		internal Move CloneForBoard(Board board, Dictionary<Piece, Piece> pieces) {
+			Piece Copy(Piece piece) {
+				if (piece == Piece.NULL_PIECE) return piece;
+				if (!pieces.TryGetValue(piece, out var copy)) {
+					copy = piece.ClonePiece(board);
+					pieces.Add(piece, copy);
+				}
+				return copy;
+			}
+			var move = new Move();
+			foreach (var change in Changes)
+				move.AddChange(new BoardChange(change.boardPosition, Copy(change.oldPiece), Copy(change.newPiece),
+					change.oldSquare, change.newSquare));
+			return move;
 		}
 
 		// ------------------------------------------------------------------------------------
@@ -96,8 +112,8 @@ namespace DChess.Chess.Playground
 
 		public bool IsCapture => CapturedPiece != Piece.NULL_PIECE;
 
-		/// <summary>True when more than one piece leaves its square (king + rook).</summary>
-		public bool IsCastling => Changes.Count(leavesSquare) > 1;
+		/// <summary>True when more than one piece moves (king + rook).</summary>
+		public bool IsCastling => movingPieces().Count > 1;
 
 		/// <summary>True when a pawn reaches the last rank with this move (it becomes a queen).</summary>
 		public bool IsPromotion => MovingPiece is PiecePawn pawn && pawn.PromotesOn(To);
@@ -106,7 +122,7 @@ namespace DChess.Chess.Playground
 		{
 			foreach (var change in Changes)
 			{
-				if (leavesSquare(change)) return change;
+				if (isMovingPieceLeaving(change)) return change;
 			}
 			return null;
 		}
@@ -157,7 +173,9 @@ namespace DChess.Chess.Playground
 					var otherChange = other.Changes[i];
 					if (otherChange.boardPosition == change.boardPosition
 						&& samePieceKind(otherChange.oldPiece, change.oldPiece)
-						&& samePieceKind(otherChange.newPiece, change.newPiece))
+						&& samePieceKind(otherChange.newPiece, change.newPiece)
+						&& otherChange.oldSquare == change.oldSquare
+						&& otherChange.newSquare == change.newSquare)
 					{
 						used[i] = true;
 						found = true;

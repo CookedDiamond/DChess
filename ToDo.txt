@@ -47,8 +47,8 @@ Speed Up/ Better AI Ideas:
 - don't use recursion so you can search layer by layer.
 (- dont start multiple recursions but rather use threads in ONE recursion. Better Alpha-Beta-Pruning.)
 
-Dead speed up ideas: 
+Dead speed up ideas:
 ?? change MinMax to make moves and undo in same board (memory efficiency!) does not work
 
-line count: 
+line count:
 git ls-files | grep '\.cs' | xargs wc -l

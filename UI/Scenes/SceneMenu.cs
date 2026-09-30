@@ -113,6 +113,7 @@ namespace DChess.UI.Scenes
 
 		public override void KeyPressed(Keys key) {
 			if (key == Keys.Enter) startMatch();
+			if (key == Keys.Escape) _game.Exit();
 		}
 
 		public override void Update(GameTime gameTime) {

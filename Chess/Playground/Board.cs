@@ -35,12 +35,8 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void PlacePiece(Vector2Int position, Piece piece) {
-			// Empty squares are not stored, so the dictionary only ever contains real pieces.
-			if (piece == Piece.NULL_PIECE) {
-				Pieces.Remove(position);
-				return;
-			}
-			Pieces[position] = piece;
+			if (piece == Piece.NULL_PIECE) Pieces.Remove(position);
+			else Pieces[position] = piece;
 		}
 
 		public bool RemovePiece(Vector2Int position) {
@@ -57,13 +53,25 @@ namespace DChess.Chess.Playground {
 		}
 
 		public bool MakeMove(Move move, bool doAfterTurnUpdate = true) {
-			// Variants can add changes to the played move (e.g. promotion),
-			// so work on a copy and never change the move object of the caller.
-			Move playedMove = move.Copy();
-			playedMove.Apply(this);
-			_moveHistory.Add(playedMove);
+			if (move == null) return false;
+			if (move.Changes.Any(c => c.newPiece != Piece.NULL_PIECE && c.newPiece.Owner != this)) {
+				// The move was created on another board (e.g. a clone): use the pieces of this board.
+				var pieceMap = new Dictionary<Piece, Piece>();
+				foreach (var change in move.Changes) {
+					if (change.oldPiece != Piece.NULL_PIECE)
+						pieceMap[change.oldPiece] = GetPiece(change.boardPosition);
+				}
+				move = move.CloneForBoard(this, pieceMap);
+			}
+			else {
+				// Variants can add changes to the played move (e.g. promotion),
+				// so work on a copy and never change the move object of the caller.
+				move = move.Copy();
+			}
+			move.Apply(this);
+			_moveHistory.Add(move);
 			if (doAfterTurnUpdate) {
-				afterTurnUpdate(playedMove);
+				afterTurnUpdate(move);
 			}
 			return true;
 		}
@@ -76,11 +84,17 @@ namespace DChess.Chess.Playground {
 			_moveHistory.RemoveAt(_moveHistory.Count - 1);
 		}
 
+		/// <summary>
+		/// Adds changes to the last move (used by variants, e.g. promotion or removed squares).
+		/// The move is undone and applied again, so undo restores everything in one step.
+		/// </summary>
 		public void AddToLastMove(List<BoardChange> additionalChanges) {
 			Move lastMove = GetLastMove();
+			lastMove.Undo(this);
 			foreach (var change in additionalChanges) {
-				lastMove.AddAndApplyChange(this, change);
+				lastMove.AddChange(change);
 			}
+			lastMove.Apply(this);
 		}
 
 		private void afterTurnUpdate(Move lastMove) {
@@ -190,6 +204,7 @@ namespace DChess.Chess.Playground {
 		/// </summary>
 		public Board CloneBoard() {
 			Board returnBoard = new (Size);
+			var pieceMap = new Dictionary<Piece, Piece>();
 
 			for (int x = 0; x < Size.x; x++) {
 				for (int y = 0; y < Size.y; y++) {
@@ -197,26 +212,15 @@ namespace DChess.Chess.Playground {
 				}
 			}
 
-			Dictionary<Piece, Piece> clonedPieces = new();
-			Piece getClone(Piece piece) {
-				if (piece == Piece.NULL_PIECE) return piece;
-				if (!clonedPieces.TryGetValue(piece, out Piece clone)) {
-					clone = piece.ClonePiece(returnBoard);
-					clonedPieces.Add(piece, clone);
-				}
-				return clone;
-			}
-
 			foreach (var pair in Pieces) {
-				returnBoard.PlacePiece(pair.Key, getClone(pair.Value));
+				var oldPiece = pair.Value;
+				var clonedPiece = oldPiece.ClonePiece(returnBoard);
+				pieceMap[oldPiece] = clonedPiece;
+				returnBoard.PlacePiece(pair.Key, clonedPiece);
 			}
 
 			foreach (var move in _moveHistory) {
-				Move clonedMove = new();
-				foreach (var change in move.Changes) {
-					clonedMove.AddChange(change.boardPosition, getClone(change.oldPiece), getClone(change.newPiece));
-				}
-				returnBoard._moveHistory.Add(clonedMove);
+				returnBoard._moveHistory.Add(move.CloneForBoard(returnBoard, pieceMap));
 			}
 
 			foreach (var variant in Variants) {

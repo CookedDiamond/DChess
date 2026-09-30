@@ -1,4 +1,5 @@
 using DChess.BotApi;
+using DChess.Bots;
 using DChess.Chess.Arena;
 using DChess.Chess.Pieces;
 using DChess.Util;
@@ -44,14 +45,15 @@ namespace DChess.Chess.Playground {
 			if (automatic && unDidLastMove) return;
 			if (!automatic && unDidLastMove) unDidLastMove = false;
 			if (Board.HasTeamWon() != TeamType.None) return;
-			if (_computerBot == null) return;
+			// Without a chosen bot (e.g. the CLI "ai" command) the MinMaxBot plays.
+			_computerBot ??= new MinMaxBot();
 
 			var result = BotRunner.RequestMove(_computerBot, Board, _computerTimeLimitMilliseconds, CancellationToken.None);
 			if (result.Move == null) {
 				Console.WriteLine($"{_computerBot.Name} could not move: {result.Error}");
 				return;
 			}
-			Board.MakeMove(result.Move);
+			MakeMove(result.Move);
 		}
 
 		public void MakeMove(Move move) {

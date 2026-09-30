@@ -11,6 +11,8 @@ namespace DChess.Chess.Pieces {
 		public PieceNull() : base(PieceType.None, TeamType.None, null) {
 		}
 
+		public override List<Move> GetAllLegalMoves(Vector2Int fromPosition) => new();
+
 		public override float GetPieceScore() {
 			return 0;
 		}

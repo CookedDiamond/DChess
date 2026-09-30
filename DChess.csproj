@@ -1,20 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Exe (not WinExe): keeps a console, so Console.WriteLine from bots is visible. -->
+    <!-- Exe (not WinExe): keeps a console, so Console.WriteLine from bots and the CLI is visible. -->
     <OutputType>Exe</OutputType>
+    <!-- net8.0 builds with the .NET 8, 9 and 10 SDKs and runs on newer runtimes (RollForward). -->
     <TargetFramework>net8.0-windows</TargetFramework>
     <RollForward>Major</RollForward>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- MonoGame manages the native window; retain DPI awareness in app.manifest. -->
+    <NoWarn>$(NoWarn);WFAC010;WFO0003</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <Compile Remove="Tests/**" />
+    <None Remove="Tests/**" />
+    <EmbeddedResource Remove="Tests/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.5.1" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" />
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />

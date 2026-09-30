@@ -16,6 +16,7 @@ namespace DChess.Chess.Pieces {
 		public int MoveCount { get; set; }
 
 		protected readonly Board _board;
+		internal Board Owner => _board;
 
 		public Piece(PieceType type, TeamType team, Board board) {
 			Type = type;
@@ -44,17 +45,17 @@ namespace DChess.Chess.Pieces {
 
 				foreach (var change in move.Changes)
 				{
-					if (change.boardPosition == toPosition) {
+					if (change.boardPosition == toPosition && change.newPiece == this) {
 						containsToPos = true;
 					}
-					if (change.boardPosition == fromPosition) {
+					if (change.boardPosition == fromPosition && change.oldPiece == this && change.newPiece == NULL_PIECE) {
 						containsFromPos = true;
 					}
-					if (containsFromPos && containsToPos) { 
+					if (containsFromPos && containsToPos) {
 						return move;
 					}
 				}
-				
+
 			}
 
 			return null;
@@ -154,26 +155,22 @@ namespace DChess.Chess.Pieces {
 			};
 		}
 
-		private Piece getPieceFromType(Board board) {
-			return Type switch { 
-				PieceType.Pawn => new PiecePawn(Team, board),
-				PieceType.Bishop => new PieceBishop(Team, board),
-				PieceType.Knight => new PieceKnight(Team, board),
-				PieceType.Rook => new PieceRook(Team, board),
-				PieceType.Queen => new PieceQueen(Team, board),
-				PieceType.King => new PieceKing(Team, board),
+		public static Piece GetPieceFromType(PieceType type, TeamType team, Board board) {
+			return type switch {
+				PieceType.Pawn => new PiecePawn(team, board),
+				PieceType.Bishop => new PieceBishop(team, board),
+				PieceType.Knight => new PieceKnight(team, board),
+				PieceType.Rook => new PieceRook(team, board),
+				PieceType.Queen => new PieceQueen(team, board),
+				PieceType.King => new PieceKing(team, board),
 				PieceType.None => NULL_PIECE,
-				_ => throw new NotImplementedException()	
+				_ => throw new NotImplementedException()
 			};
 		}
 
-		/// <summary>
-		/// Pieces calculate their moves on the board they belong to,
-		/// so a clone has to be bound to the board it is placed on.
-		/// </summary>
-		public Piece ClonePiece(Board targetBoard) {
-			Piece clonedPiece = getPieceFromType(targetBoard);
-			if (clonedPiece == NULL_PIECE) return NULL_PIECE;
+		public Piece ClonePiece(Board board = null) {
+			if (this == NULL_PIECE) return NULL_PIECE;
+			Piece clonedPiece = GetPieceFromType(Type, Team, board ?? _board);
 			clonedPiece.MoveCount = MoveCount;
 			return clonedPiece;
 		}

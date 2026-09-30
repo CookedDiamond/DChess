@@ -1,20 +1,32 @@
 # DChess
 
-A chess game (MonoGame) with a **bot arena**: write chess bots as single C# files and let them play against each other. You can watch the games live or replay them afterwards.
+A chess game (MonoGame) with a **bot arena**: write chess bots as single C# files and let them play against each other. You can watch the games live or replay them afterwards. There is also a headless command line interface for the engine.
+
+Games end when a king is captured; check and checkmate are not enforced.
 
 ## Run it
 
-Requirements: Windows and the [.NET 8 SDK](https://dotnet.microsoft.com/download) (a newer SDK works too).
+Requirements: Windows and the [.NET 8 SDK](https://dotnet.microsoft.com/download) or newer.
 
 ```bash
-dotnet run
+dotnet run --project DChess.csproj
 ```
 
 The first build also restores the MonoGame content tools, which takes a minute. You can also open `DChess.sln` in Visual Studio / Rider and press Start.
 
+Build and run the tests:
+
+```bash
+dotnet build DChess.sln -c Release
+```
+
+```bash
+dotnet test DChess.sln -c Release
+```
+
 ## Using the app
 
-**Menu:** choose Player 1 and Player 2 (any bot or **Human**), the number of games, and the time per move, then press **Start Match**. Player 1 starts as White and colors swap every game.
+**Menu:** choose Player 1 and Player 2 (any bot or **Human**), the number of games, and the time per move, then press **Start Match**. Player 1 starts as White and colors swap every game. Escape quits.
 
 **Arena:** shows the games of the match. The left panel has the score and the list of games (click one to watch it). The right panel has the moves of the selected game (click a move to jump to it).
 
@@ -30,12 +42,32 @@ The first build also restores the MonoGame content tools, which takes a minute. 
 
 When a human plays, click a piece and then its target square.
 
-**Sandbox:** the free board from before. Click to move pieces for both sides. `A` lets the selected bot move, `D` undoes a move, `S` prints the evaluation.
+**Sandbox:** a free board. Click to move pieces for both sides. `A` lets the bot move, `D` undoes a move, `S` prints the evaluation.
 
-**Terminal matches** (no window, fast):
+Castling requires an unmoved king and rook and a clear, playable path. There is no rule against castling through check, consistent with king capture rules.
+
+## Command line
+
+**Bot matches** without a window (fast, many games):
 
 ```bash
-dotnet run -- --arena MinMaxBot GreedyBot --games 10 --time 500
+dotnet run --project DChess.csproj -- --arena MinMaxBot GreedyBot --games 10 --time 500
+```
+
+**Engine CLI:** commands include `move e2 e4`, `moves e2`, `undo`, `ai`, `board`, `history`, and `quit`. Run `dotnet run -- cli --help` for options or `help` inside the CLI. Use `--preset small --size 6` for a custom board size. Available variants are `promotion`, `castling`, `friendlyfire`, and `battleroyale`.
+
+```bash
+dotnet run --project DChess.csproj -- cli --variant castling
+```
+
+```powershell
+"move e2 e4`nundo`nquit" | dotnet run --project DChess.csproj -- cli
+```
+
+**Smoke test:** loads content, renders ten frames, and exits. It requires a Windows graphics session.
+
+```bash
+dotnet run --project DChess.csproj -c Release -- --smoke-test
 ```
 
 ## Writing a bot
@@ -46,7 +78,15 @@ Included bots:
 
 - `RandomBot`: plays random moves.
 - `GreedyBot`: simple one-move lookahead that takes the most valuable piece and avoids hanging its own.
-- `MinMaxBot`: the revamped old AI. It uses alpha-beta search with iterative deepening, quiescence search and time management.
+- `MinMaxBot`: alpha-beta search with iterative deepening, quiescence search and time management. It is also the engine behind the CLI `ai` command and the sandbox `A` key.
+
+## Tests
+
+Automated tests (`Tests/`) cover movement, captures, promotion, castling, variant undo, independent AI search copies, CLI options, and TCP framing.
+
+## Multiplayer
+
+Multiplayer is a local TCP relay on `127.0.0.1:13000`; both peers must start with matching boards and variants. Incoming moves are validated and applied on the game thread. Matchmaking, remote undo synchronization, and variant configuration negotiation are not implemented, and the menu has no multiplayer entry yet.
 
 ## Project layout
 
@@ -56,4 +96,7 @@ Included bots:
 | `BotApi/` | What bots see: `IChessBot`, `BotBoard`, `BotTimer`, plus the bot registry and the runner that enforces time limits. |
 | `Chess/Arena/` | Matches: game rules (end conditions), recording and move notation, and the terminal arena. |
 | `Chess/Playground/`, `Chess/Pieces/`, `Chess/Variants/` | The chess engine (board, moves, pieces, variants such as castling and promotion). |
+| `Cli/` | Headless text interface to the engine. |
 | `UI/` | Scenes (menu, arena, sandbox) and drawing helpers. |
+| `Multiplayer/` | TCP client/server. |
+| `Tests/` | MSTest engine, CLI and networking tests. |

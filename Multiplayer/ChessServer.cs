@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net;
@@ -15,11 +15,11 @@ namespace DChess.Server {
 		public static readonly int PORT = 13000;
 
 		public ChessServer() {
-			Thread t = new Thread(new ThreadStart(listen));
+			Thread t = new Thread(new ThreadStart(Run)) { IsBackground = true };
 			t.Start();
 		}
 
-		private static void listen() {
+		public static void Run() {
 			TcpListener server = null;
 			try {
 				IPAddress localAddr = IPAddress.Parse(IP_ADRESS);
@@ -31,7 +31,7 @@ namespace DChess.Server {
 				// Enter the listening loop.
 				while (true) {
 					TcpClient client = server.AcceptTcpClient();
-					new Thread(() => handleClient(client)).Start();
+					new Thread(() => handleClient(client)) { IsBackground = true }.Start();
 
 				}
 			}
@@ -39,7 +39,7 @@ namespace DChess.Server {
 				Debug.WriteLine("SocketException: {0}", e);
 			}
 			finally {
-				server.Stop();
+				server?.Stop();
 			}
 
 		}
@@ -48,29 +48,37 @@ namespace DChess.Server {
 
 			Debug.WriteLine("Connected a client to the server!");
 			var stream = client.GetStream();
-			tcpClients.Add(client);
+			lock (tcpClients) tcpClients.Add(client);
 
 			while (true) {
 
 				try {
 					// Buffer for reading data
-					byte[] bytes = new byte[256];
-					stream.Read(bytes, 0, bytes.Length);
+					byte[] bytes = new byte[DChess.Multiplayer.ByteConverter.MOVE_LENGTH];
+					stream.ReadExactly(bytes);
 					// Send back a response.
-					SendDataToAllClients(client, bytes);
+					SendDataToAllClients(client, bytes, bytes.Length);
 				}
 				catch {
-					tcpClients.Remove(client);
-					client.Dispose();
+					break;
 				}
 			}
+			lock (tcpClients) tcpClients.Remove(client);
+			client.Dispose();
 		}
 
-		private static void SendDataToAllClients(TcpClient from, byte[] data) {
-			foreach (var client in tcpClients) {
+		private static void SendDataToAllClients(TcpClient from, byte[] data, int count) {
+			TcpClient[] clients;
+			lock (tcpClients) clients = tcpClients.ToArray();
+			foreach (var client in clients) {
 				if (client != from) {
-					var stream = client.GetStream();
-					stream.Write(data, 0, data.Length);
+					try {
+						var stream = client.GetStream();
+						lock (client) stream.Write(data, 0, count);
+					} catch (Exception ex) when (ex is IOException || ex is SocketException || ex is ObjectDisposedException) {
+						lock (tcpClients) tcpClients.Remove(client);
+						client.Dispose();
+					}
 				}
 			}
 		}

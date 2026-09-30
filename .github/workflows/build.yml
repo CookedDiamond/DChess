@@ -1,0 +1,19 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          # The projects target net8.0: the .NET 8 runtime runs the tests, the newest SDK builds.
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - run: dotnet build DChess.sln -c Release --warnaserror
+      - run: dotnet test DChess.sln -c Release --no-build

@@ -89,8 +89,8 @@ namespace DChess.UI.Scenes
 			string status = winner != TeamType.None ? $"{winner} wins!" : $"{_board.GetTurnTeamType()} to move";
 			spriteBatch.DrawTextLine(status, new Vector2(10, 10 + lineHeight * 1.3f), lineHeight, Color.White);
 
-			string botName = _boardManager.ComputerBotName;
-			string help = (botName != null ? $"A: {botName} moves   " : "") + "D: undo   S: print eval   Esc: menu";
+			string botName = _boardManager.ComputerBotName ?? "MinMaxBot";
+			string help = $"A: {botName} moves   D: undo   S: print eval   Esc: menu";
 			spriteBatch.DrawTextLine(help, new Vector2(10, Game1.ScreenSize.Y - lineHeight * 1.4f), lineHeight * 0.8f, Color.White);
 			base.Draw(spriteBatch);
 		}

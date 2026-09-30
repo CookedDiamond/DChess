@@ -13,6 +13,8 @@ namespace DChess {
 		private static ScalingUtil _gameScaling;
 		public static SpriteBatch SpriteBatch { get; private set; }
 
+		private readonly int _smokeTestFrames;
+		private int _framesDrawn;
 		private readonly InputHandler _inputHandler;
 
 		private Scene _menuScene;
@@ -26,7 +28,9 @@ namespace DChess {
 
 		public SceneType ActiveSceneType { get; private set; }
 
-		public Game1() {
+		/// <param name="smokeTestFrames">If greater than 0, the game exits after drawing this many frames ("--smoke-test").</param>
+		public Game1(int smokeTestFrames = 0) {
+			_smokeTestFrames = smokeTestFrames;
 			_inputHandler = new InputHandler();
 
 			_graphics = new GraphicsDeviceManager(this);
@@ -134,6 +138,7 @@ namespace DChess {
 			SpriteBatch.End();
 
 			base.Draw(gameTime);
+			if (_smokeTestFrames > 0 && ++_framesDrawn >= _smokeTestFrames) Exit();
 		}
 	}
 

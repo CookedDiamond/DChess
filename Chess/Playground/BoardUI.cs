@@ -51,6 +51,7 @@ namespace DChess.Chess.Playground {
 		}
 
 		public void SelectSquare(SquareUI squareUI) {
+			if (_board.HasTeamWon() != TeamType.None) return;
 			Piece piece = _board.GetPiece(squareUI.Position);
 			if (_selectedSquare == null
 				&& piece != null
@@ -63,7 +64,7 @@ namespace DChess.Chess.Playground {
 				var pos1 = _selectedSquare.Position;
 				var pos2 = squareUI.Position;
 				var newPiece = _board.GetPiece(pos1);
-				var move = newPiece.GetMove(pos1, pos2);
+				var move = newPiece.Team == _board.GetTurnTeamType() ? newPiece.GetMove(pos1, pos2) : null;
 				if (move != null)
 				{
 					_boardManager.MakeMove(move);
